@@ -1,4 +1,4 @@
-from vector_tile import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureProperties
+from vector_tile_base import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureProperties
 
 test_data = open('tests/test.mvt', 'r').read()
 

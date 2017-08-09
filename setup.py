@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import sys, os
 
 # Parse the version from the fiona module.
-with open('vector_tile/__init__.py') as f:
+with open('vector_tile_base/__init__.py') as f:
     for line in f:
         if line.find("__version__") >= 0:
             version = line.split("=")[1].strip()
@@ -10,7 +10,7 @@ with open('vector_tile/__init__.py') as f:
             version = version.strip("'")
             continue
 
-setup(name='vector_tile',
+setup(name='vector_tile_base',
       version=version,
       description="Python implementation of Mapbox vector tiles",
       long_description="""\

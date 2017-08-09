@@ -1,5 +1,5 @@
 import pytest
-from vector_tile import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureProperties
+from vector_tile_base import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureProperties
 
 def test_no_layers():
     vt = VectorTile()
