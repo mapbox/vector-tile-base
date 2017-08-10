@@ -23,6 +23,7 @@ def test_decode_vector_tile():
         assert feature.type == 'point'
         assert feature.id == expected_id
         geometry = feature.get_points()
+        assert geometry == feature.get_geometry()
         assert isinstance(geometry, list)
         assert len(geometry) == 1
         point = geometry[0]
@@ -62,6 +63,7 @@ def test_decode_vector_tile():
     assert feature.id == expected_id
     expected_id += 1
     geometry = feature.get_line_strings()
+    assert geometry == feature.get_geometry()
     assert isinstance(geometry, list)
     assert len(geometry) == 2
     geometry == [[[10,10],[10,20],[20,20]],[[11,11],[12,13]]]
@@ -89,6 +91,7 @@ def test_decode_vector_tile():
     expected_id += 1
     geometry = feature.get_rings()
     multi_polygons = feature.get_polygons()
+    assert multi_polygons == feature.get_geometry()
     assert isinstance(geometry, list)
     assert isinstance(multi_polygons, list)
     assert len(multi_polygons) == 1
@@ -120,6 +123,7 @@ def test_decode_vector_tile():
     assert len(control_points) == 4
     assert control_points == [[8,10],[9,11],[11,9],[12,10]]
     knots = feature.get_knots()
+    assert [control_points, knots] == feature.get_geometry()
     assert len(knots) == 7
     assert knots == [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
     props = feature.properties

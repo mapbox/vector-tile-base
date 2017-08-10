@@ -202,7 +202,9 @@ class PointFeature(Feature):
             pass
         self._cursor_at_end = True
         return points
-        
+ 
+    def get_geometry(self):
+        return self.get_points()       
 
 class LineStringFeature(Feature):
     
@@ -252,6 +254,9 @@ class LineStringFeature(Feature):
             pass
         self._cursor_at_end = True
         return line_strings
+    
+    def get_geometry(self):
+        return self.get_line_strings()       
 
 class PolygonFeature(Feature):
     
@@ -331,6 +336,8 @@ class PolygonFeature(Feature):
             polygons.append(polygon)
         return polygons
 
+    def get_geometry(self):
+        return self.get_polygons()       
 
 class SplineFeature(Feature):
     
@@ -378,6 +385,8 @@ class SplineFeature(Feature):
     def get_knots(self):
         return self._feature.knots
 
+    def get_geometry(self):
+        return [self.get_control_points(), self.get_knots()]  
 class Layer(object):
 
     def __init__(self, layer, name = None, dimensions = None, version = None):

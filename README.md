@@ -27,8 +27,15 @@ Some very simple code examples
 
 ### Encode
 
+There is an example encoding provided in `examples` and can be used to ecode a `.mvt` file.
+
+```
+python examples/encode.py my.mvt
+```
+
 ```
 import vector_tile_base
+import sys
 
 vt = vector_tile_base.VectorTile()
 layer = vt.add_layer('my_locations')
@@ -39,21 +46,33 @@ feature.properties = { 'type': 1, 'name': 'my_points' }
 
 encoded_tile = vt.serialize()
 
+f = open(sys.argv[1], "wb")
+f.write(encoded_tile)
+f.close()
 ```
 
 ### Decode
 
+There is an example decoding provided in `examples` and can be used to decode a `.mvt` file.
+
+```
+python examples/decode.py my.mvt
+```
+
 ```
 import vector_tile_base
+import sys
 
-raw_tile = open('tile.mvt', 'r').read()
+f = open(sys.argv[1], "rb")
+raw_tile = f.read()
+f.close()
 
 vt = vector_tile_base.VectorTile(raw_tile)
-for l in layers:
-    print layer.name
-    for f in features:
-        print f.type
-        print f.properties
-        print f.get_geometry()
+for l in vt.layers:
+    print(l.name)
+    for f in l.features:
+        print(f.type)
+        print(f.properties)
+        print(f.get_geometry())
 ```
 
