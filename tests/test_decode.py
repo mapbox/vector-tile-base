@@ -1,6 +1,8 @@
 from vector_tile_base import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureProperties
 
-test_data = open('tests/test.mvt', 'r').read()
+f = open('tests/test.mvt', 'rb')
+test_data = f.read()
+f.close()
 
 def test_decode_vector_tile():
     vt = VectorTile(test_data)

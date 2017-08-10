@@ -1,5 +1,12 @@
 import itertools
-import vector_tile_pb2
+from . import vector_tile_pb2
+
+# Python3 Compatability
+try:
+    unicode
+    other_str = unicode
+except NameError:
+    other_str = bytes
 
 def zig_zag_encode(val):
     return (int(val) << 1) ^ (int(val) >> 31)
@@ -60,8 +67,8 @@ class FeatureProperties(object):
         
     def __getitem__(self, key):
         self._decode_prop()
-        if not isinstance(key, str) and not isinstance(key, unicode):
-            raise TypeError("Keys must be of type str or unicode")
+        if not isinstance(key, str) and not isinstance(key, other_str):
+            raise TypeError("Keys must be of type str")
         return self._prop[key]
 
     def __delitem__(self, key):
@@ -70,8 +77,8 @@ class FeatureProperties(object):
         self._encode_prop()
 
     def __setitem__(self, key, value):
-        if not isinstance(key, str) and not isinstance(key, unicode):
-            raise TypeError("Keys must be of type str or unicode")
+        if not isinstance(key, str) and not isinstance(key, other_str):
+            raise TypeError("Keys must be of type str or other_str")
         self._decode_prop()
         self._prop[key] = value
         self._encode_prop()
@@ -98,7 +105,7 @@ class FeatureProperties(object):
         return self._prop.__contains__(key)
    
     def set(self, prop):
-        self._prop = prop
+        self._prop = dict(prop)
         self._encode_prop()
 
 class Feature(object):
@@ -116,17 +123,17 @@ class Feature(object):
         self._cursor_at_end = False
     
     def _encode_point(self, pt):
-        for i in xrange(self.dimensions):
+        for i in range(self.dimensions):
             self._feature.geometry.append(zig_zag_encode(pt[i] - self.cursor[i]))
             self.cursor[i] = pt[i]
 
     def _decode_point(self, integers):
-        for i in xrange(self.dimensions):
+        for i in range(self.dimensions):
             self.cursor[i] = self.cursor[i] + zig_zag_decode(integers[i])
         return list(self.cursor)
 
     def _points_equal(self, pt1, pt2):
-        for i in xrange(self.dimensions):
+        for i in range(self.dimensions):
             if pt1[i] is not pt2[i]:
                 return False
         return True
@@ -176,7 +183,7 @@ class PointFeature(Feature):
             num_commands = 1
         self._feature.geometry.append(command_move_to(num_commands))
         if multi_point:
-            for i in xrange(num_commands):
+            for i in range(num_commands):
                 self._encode_point(points[i])
         else:
             self._encode_point(points)
@@ -186,11 +193,11 @@ class PointFeature(Feature):
         self._reset_cursor()
         geom = iter(self._feature.geometry)
         try:
-            current_command = geom.next()
+            current_command = next(geom)
             while next_command_move_to(current_command):
-                for i in xrange(get_command_count(current_command)):
-                    points.append(self._decode_point([geom.next() for n in xrange(self.dimensions)]))
-                current_command = geom.next()
+                for i in range(get_command_count(current_command)):
+                    points.append(self._decode_point([next(geom) for n in range(self.dimensions)]))
+                current_command = next(geom)
         except StopIteration:
             pass
         self._cursor_at_end = True
@@ -215,7 +222,7 @@ class LineStringFeature(Feature):
         self._feature.geometry.append(command_move_to(1))
         self._encode_point(linestring[0])
         self._feature.geometry.append(command_line_to(num_commands - 1))
-        for i in xrange(1, num_commands):
+        for i in range(1, num_commands):
             self._encode_point(linestring[i])
     
     def get_line_strings(self):
@@ -224,19 +231,19 @@ class LineStringFeature(Feature):
         self._reset_cursor()
         geom = iter(self._feature.geometry)
         try:
-            current_command = geom.next()
+            current_command = next(geom)
             while next_command_move_to(current_command):
                 line_string = []
                 if get_command_count(current_command) != 1:
                     raise Exception("Command move_to has command count not equal to 1 in a line string")
-                line_string.append(self._decode_point([geom.next() for n in xrange(self.dimensions)]))
-                current_command = geom.next()
+                line_string.append(self._decode_point([next(geom) for n in range(self.dimensions)]))
+                current_command = next(geom)
                 if not next_command_line_to(current_command):
                     raise Exception("Command move_to not followed by a line_to command in a line string")
                 while next_command_line_to(current_command):
-                    for i in xrange(get_command_count(current_command)):
-                        line_string.append(self._decode_point([geom.next() for n in xrange(self.dimensions)]))
-                    current_command = geom.next()
+                    for i in range(get_command_count(current_command)):
+                        line_string.append(self._decode_point([next(geom) for n in range(self.dimensions)]))
+                    current_command = next(geom)
                 if len(line_string) > 1:
                     line_strings.append(line_string)
         except StopIteration:
@@ -268,7 +275,7 @@ class PolygonFeature(Feature):
         self._feature.geometry.append(command_move_to(1))
         self._encode_point(ring[0])
         self._feature.geometry.append(command_line_to(num_commands - 1))
-        for i in xrange(1, num_commands):
+        for i in range(1, num_commands):
             self._encode_point(ring[i])
         self._feature.geometry.append(command_close_path())
     
@@ -278,23 +285,23 @@ class PolygonFeature(Feature):
         self._reset_cursor()
         geom = iter(self._feature.geometry)
         try:
-            current_command = geom.next()
+            current_command = next(geom)
             while next_command_move_to(current_command):
                 ring = []
                 if get_command_count(current_command) != 1:
                     raise Exception("Command move_to has command count not equal to 1 in a line string")
-                ring.append(self._decode_point([geom.next() for n in xrange(self.dimensions)]))
-                current_command = geom.next()
+                ring.append(self._decode_point([next(geom) for n in range(self.dimensions)]))
+                current_command = next(geom)
                 while next_command_line_to(current_command):
-                    for i in xrange(get_command_count(current_command)):
-                        ring.append(self._decode_point([geom.next() for n in xrange(self.dimensions)]))
-                    current_command = geom.next()
+                    for i in range(get_command_count(current_command)):
+                        ring.append(self._decode_point([next(geom) for n in range(self.dimensions)]))
+                    current_command = next(geom)
                 if not next_command_close_path(current_command):
                     raise Exception("Polygon not closed with close_path command")
                 ring.append(ring[0])
                 if len(ring) > 3:
                     rings.append(ring)
-                current_command = geom.next()
+                current_command = next(geom)
         except StopIteration:
             pass
         self._cursor_at_end = True
@@ -304,7 +311,7 @@ class PolygonFeature(Feature):
         if self.dimensions != 2:
             return False
         area = 0.0
-        for i in xrange(len(ring) - 1):
+        for i in range(len(ring) - 1):
             area += (float(ring[i][0]) * float(ring[i+1][1])) - (float(ring[i][1]) * float(ring[i+1][0]))
         return area < 0.0
     
@@ -340,7 +347,7 @@ class SplineFeature(Feature):
         self._feature.geometry.append(command_move_to(1))
         self._encode_point(control_points[0])
         self._feature.geometry.append(command_line_to(num_commands - 1))
-        for i in xrange(1, num_commands):
+        for i in range(1, num_commands):
             self._encode_point(control_points[i])
     
     def get_control_points(self):
@@ -348,16 +355,16 @@ class SplineFeature(Feature):
         self._reset_cursor()
         geom = iter(self._feature.geometry)
         try:
-            current_command = geom.next()
+            current_command = next(geom)
             if next_command_move_to(current_command):
                 if get_command_count(current_command) != 1:
                     raise Exception("Command move_to has command count not equal to 1 in a line string")
-                control_points.append(self._decode_point([geom.next() for n in xrange(self.dimensions)]))
-                current_command = geom.next()
+                control_points.append(self._decode_point([next(geom) for n in range(self.dimensions)]))
+                current_command = next(geom)
                 while next_command_line_to(current_command):
-                    for i in xrange(get_command_count(current_command)):
-                        control_points.append(self._decode_point([geom.next() for n in xrange(self.dimensions)]))
-                    current_command = geom.next()
+                    for i in range(get_command_count(current_command)):
+                        control_points.append(self._decode_point([next(geom) for n in range(self.dimensions)]))
+                    current_command = next(geom)
         except StopIteration:
             pass
         self._cursor_at_end = True
@@ -414,13 +421,13 @@ class Layer(object):
     def _build_features(self):
         dim = self._layer.dimensions
         for feature in self._layer.features:
-            if feature.type is vector_tile_pb2.Tile.POINT:
+            if feature.type == vector_tile_pb2.Tile.POINT:
                 self._features.append(PointFeature(feature, self, dim))
-            elif feature.type is vector_tile_pb2.Tile.LINESTRING:
+            elif feature.type == vector_tile_pb2.Tile.LINESTRING:
                 self._features.append(LineStringFeature(feature, self, dim))
-            elif feature.type is vector_tile_pb2.Tile.POLYGON:
+            elif feature.type == vector_tile_pb2.Tile.POLYGON:
                 self._features.append(PolygonFeature(feature, self, dim))
-            elif feature.type is vector_tile_pb2.Tile.SPLINE:
+            elif feature.type == vector_tile_pb2.Tile.SPLINE:
                 self._features.append(SplineFeature(feature, self, dim))
     
     def add_point_feature(self):
@@ -479,21 +486,22 @@ class Layer(object):
  
     def get_attributes(self, tags):
         properties = {}
-        for i in xrange(0,len(tags),2):
+        for i in range(0,len(tags),2):
             properties[self._keys[tags[i]]] = self._values[tags[i+1]]
         return properties
 
     def add_attributes(self, props):
-        tags = [];
+        tags = []
+        remove = []
         for k,v in props.items():
-            if not isinstance(k, str) and not isinstance(k, unicode):
-                del props[k]
+            if not isinstance(k, str) and not isinstance(k, other_str):
+                remove.append(k)
                 continue
             if v not in self._values:
                 if (isinstance(v,bool)):
                     val = self._layer.values.add()
                     val.bool_value = v
-                elif (isinstance(v,str)) or (isinstance(v,unicode)):
+                elif (isinstance(v,str)) or (isinstance(v,other_str)):
                     val = self._layer.values.add()
                     val.string_value = v
                 elif (isinstance(v,int)):
@@ -503,7 +511,7 @@ class Layer(object):
                     val = self._layer.values.add()
                     val.double_value = v
                 else:
-                    del props[k]
+                    remove.append(k)
                     continue
                 self._values.append(v)
             if k not in self._keys:
@@ -511,6 +519,8 @@ class Layer(object):
                 self._keys.append(k)
             tags.append(self._keys.index(k))
             tags.append(self._values.index(v))
+        for k in remove:
+            del props[k]
         return tags
 
 
@@ -519,7 +529,7 @@ class VectorTile(object):
     def __init__(self, tile = None):
         self._layers = []
         if tile:
-            if (isinstance(tile,str)) or (isinstance(tile,unicode)):
+            if (isinstance(tile,str)) or (isinstance(tile,other_str)):
                 self._tile = vector_tile_pb2.Tile()
                 self._tile.ParseFromString(tile)
             else:
