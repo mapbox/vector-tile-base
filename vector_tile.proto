@@ -24,8 +24,10 @@ message Tile {
                 optional uint64 uint_value = 5;
                 optional sint64 sint_value = 6;
                 optional bool bool_value = 7;
+                repeated uint32 hash_value = 8 [ packed = true ];
+                repeated uint32 list_value = 9 [ packed = true ];
 
-                extensions 8 to max;
+                extensions 10 to max;
         }
 
         // Features are described in section 4.2 of the specification

@@ -87,10 +87,10 @@ def test_feature_properties():
     with pytest.raises(TypeError):
         foo = feature.properties[1]
     # During setting invalid properties with bad keys or value types will just be dropped
-    prop_dict = {'foo': [1,2,3], 'fee': {'a':'b'}, 1.2341: 'stuff', 1: 'fish', 'go': False }
+    prop_dict = {'foo': [1,2,3], 'fee': [{'a':'b'}, {'a':['c','d']}], 1.2341: 'stuff', 1: 'fish', 'go': False }
     feature.properties = prop_dict
     assert feature.properties != prop_dict
-    assert feature.properties == { 'go': False }
+    assert feature.properties == {'foo': [1,2,3], 'fee': [{'a':'b'}, {'a':['c','d']}], 'go': False }
 
 def test_create_point_feature():
     vt = VectorTile()

@@ -387,6 +387,7 @@ class SplineFeature(Feature):
 
     def get_geometry(self):
         return [self.get_control_points(), self.get_knots()]  
+
 class Layer(object):
 
     def __init__(self, layer, name = None, dimensions = None, version = None):
@@ -402,10 +403,16 @@ class Layer(object):
             self._layer.dimensions = dimensions
         elif not self._layer.HasField('dimensions'):
             self._layer.dimensions = 2
-        self._decode_values()
         self._decode_keys()
+        self._decode_values()
         self._build_features()
 
+    def _decode_list(self, tags):
+        out = []
+        for t in tags:
+            out.append(self._values[t])
+        return out
+    
     def _decode_values(self):
         for val in self._layer.values:
             if val.HasField('bool_value'):
@@ -422,6 +429,10 @@ class Layer(object):
                 self._values.append(val.uint_value)
             elif val.HasField('sint_value'):
                 self._values.append(val.sint_value)
+            elif len(val.hash_value) > 0:
+                self._values.append(self.get_attributes(val.hash_value))
+            elif len(val.list_value) > 0:
+                self._values.append(self._decode_list(val.list_value))
 
     def _decode_keys(self):
         for key in self._layer.keys:
@@ -499,6 +510,48 @@ class Layer(object):
             properties[self._keys[tags[i]]] = self._values[tags[i+1]]
         return properties
 
+    def add_attribute_list(self, data):
+        tags = []
+        remove = []
+        for v in data:
+            if v not in self._values:
+                if isinstance(v,bool):
+                    val = self._layer.values.add()
+                    val.bool_value = v
+                elif (isinstance(v,str)) or (isinstance(v,other_str)):
+                    val = self._layer.values.add()
+                    val.string_value = v
+                elif isinstance(v,int):
+                    val = self._layer.values.add()
+                    val.int_value = v
+                elif isinstance(v,float):
+                    val = self._layer.values.add()
+                    val.double_value = v
+                elif isinstance(v,list):
+                    list_tags = self.add_attribute_list(v)
+                    if len(list_tags) > 0:
+                        val = self._layer.values.add()
+                        val.list_value[:] = list_tags
+                    else:
+                        remove.append(v)
+                        continue
+                elif isinstance(v, dict):
+                    dict_tags = self.add_attributes(v)
+                    if len(dict_tags) > 0:
+                        val = self._layer.values.add()
+                        val.hash_value[:] = dict_tags
+                    else:
+                        remove.append(v)
+                        continue
+                else:
+                    remove.append(v)
+                    continue
+                self._values.append(v)
+            tags.append(self._values.index(v))
+        if remove:
+            data[:] = [x for x in data if x not in remove]
+        return tags
+
     def add_attributes(self, props):
         tags = []
         remove = []
@@ -507,18 +560,34 @@ class Layer(object):
                 remove.append(k)
                 continue
             if v not in self._values:
-                if (isinstance(v,bool)):
+                if isinstance(v,bool):
                     val = self._layer.values.add()
                     val.bool_value = v
                 elif (isinstance(v,str)) or (isinstance(v,other_str)):
                     val = self._layer.values.add()
                     val.string_value = v
-                elif (isinstance(v,int)):
+                elif isinstance(v,int):
                     val = self._layer.values.add()
                     val.int_value = v
-                elif (isinstance(v,float)):
+                elif isinstance(v,float):
                     val = self._layer.values.add()
                     val.double_value = v
+                elif isinstance(v,list):
+                    list_tags = self.add_attribute_list(v)
+                    if len(list_tags) > 0:
+                        val = self._layer.values.add()
+                        val.list_value[:] = list_tags
+                    else:
+                        remove.append(k)
+                        continue
+                elif isinstance(v, dict):
+                    dict_tags = self.add_attributes(v)
+                    if len(dict_tags) > 0:
+                        val = self._layer.values.add()
+                        val.hash_value[:] = dict_tags
+                    else:
+                        remove.append(k)
+                        continue
                 else:
                     remove.append(k)
                     continue
