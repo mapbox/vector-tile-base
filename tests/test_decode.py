@@ -124,8 +124,8 @@ def test_decode_vector_tile():
     assert control_points == [[8,10],[9,11],[11,9],[12,10]]
     knots = feature.get_knots()
     assert [control_points, knots] == feature.get_geometry()
-    assert len(knots) == 7
-    assert knots == [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
+    assert len(knots) == 14
+    assert knots == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.875, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0]
     props = feature.properties
     assert isinstance(props, FeatureProperties)
     assert len(props) == 1
@@ -248,8 +248,8 @@ def test_decode_vector_tile():
     assert len(control_points) == 4
     assert control_points == [[8,10,10],[9,11,11],[11,9,12],[12,10,13]]
     knots = feature.get_knots()
-    assert len(knots) == 7
-    assert knots == [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
+    assert len(knots) == 14
+    assert knots == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.875, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0]
     props = feature.properties
     assert isinstance(props, FeatureProperties)
     assert len(props) == 1

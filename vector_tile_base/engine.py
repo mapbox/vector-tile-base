@@ -41,6 +41,11 @@ def next_command_line_to(command_integer):
 def next_command_close_path(command_integer):
     return get_command_id(command_integer) == 7
 
+class Float(float):
+    
+    def __init__(self, *args, **kwargs):
+        float.__init__(self, *args, **kwargs)
+
 class FeatureProperties(object):
 
     def __init__(self, feature, layer):
@@ -527,6 +532,9 @@ class Layer(object):
                 elif isinstance(v,float):
                     val = self._layer.values.add()
                     val.double_value = v
+                elif isinstance(v,Float):
+                    val = self._layer.values.add()
+                    val.float_value = v
                 elif isinstance(v,list):
                     list_tags = self.add_attribute_list(v)
                     if len(list_tags) > 0:
@@ -569,6 +577,9 @@ class Layer(object):
                 elif isinstance(v,int):
                     val = self._layer.values.add()
                     val.int_value = v
+                elif isinstance(v,Float):
+                    val = self._layer.values.add()
+                    val.float_value = v
                 elif isinstance(v,float):
                     val = self._layer.values.add()
                     val.double_value = v

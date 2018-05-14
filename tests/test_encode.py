@@ -1,5 +1,5 @@
 import pytest
-from vector_tile_base import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureProperties
+from vector_tile_base import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureProperties, Float
 
 def test_no_layers():
     vt = VectorTile()
@@ -87,10 +87,23 @@ def test_feature_properties():
     with pytest.raises(TypeError):
         foo = feature.properties[1]
     # During setting invalid properties with bad keys or value types will just be dropped
-    prop_dict = {'foo': [1,2,3], 'fee': [{'a':'b'}, {'a':['c','d']}], 1.2341: 'stuff', 1: 'fish', 'go': False }
+    prop_dict = {'foo': [1,2,3], 'fee': [{'a':'b'}, {'a':['c','d']}], 1.2341: 'stuff', 1: 'fish', 'go': False, 'double': 2.32432, 'float': Float(23432.3222) }
+    prop_dict2 = {'foo': [1,2,3], 'fee': [{'a':'b'}, {'a':['c','d']}], 'go': False, 'double': 2.32432, 'float': 23432.3222 }
     feature.properties = prop_dict
     assert feature.properties != prop_dict
-    assert feature.properties == {'foo': [1,2,3], 'fee': [{'a':'b'}, {'a':['c','d']}], 'go': False }
+    assert feature.properties == prop_dict2
+    
+    # Now serialize the tile
+    data = vt.serialize()
+    # Reload as new tile to check that cursor moves to proper position for another add point
+    vt = VectorTile(data)
+    feature = vt.layers[0].features[0]
+    assert feature.properties['foo'] == prop_dict2['foo']
+    assert feature.properties['fee'] == prop_dict2['fee']
+    assert feature.properties['go'] == prop_dict2['go']
+    assert feature.properties['double'] == prop_dict2['double']
+    # note change is expected due to float encoding!
+    assert feature.properties['float'] == 23432.322265625 
 
 def test_create_point_feature():
     vt = VectorTile()
