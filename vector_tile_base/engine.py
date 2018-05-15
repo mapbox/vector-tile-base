@@ -529,12 +529,12 @@ class Layer(object):
                 elif isinstance(v,int):
                     val = self._layer.values.add()
                     val.int_value = v
-                elif isinstance(v,float):
-                    val = self._layer.values.add()
-                    val.double_value = v
                 elif isinstance(v,Float):
                     val = self._layer.values.add()
                     val.float_value = v
+                elif isinstance(v,float):
+                    val = self._layer.values.add()
+                    val.double_value = v
                 elif isinstance(v,list):
                     list_tags = self.add_attribute_list(v)
                     if len(list_tags) > 0:
