@@ -519,7 +519,7 @@ class Layer(object):
         tags = []
         remove = []
         for v in data:
-            if v not in self._values:
+            if not (v in self._values and type(self._values[self._values.index(v)]) == type(v)):
                 if isinstance(v,bool):
                     val = self._layer.values.add()
                     val.bool_value = v
@@ -567,7 +567,7 @@ class Layer(object):
             if not isinstance(k, str) and not isinstance(k, other_str):
                 remove.append(k)
                 continue
-            if v not in self._values:
+            if not (v in self._values and type(self._values[self._values.index(v)]) == type(v)):
                 if isinstance(v,bool):
                     val = self._layer.values.add()
                     val.bool_value = v
