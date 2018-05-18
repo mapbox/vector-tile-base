@@ -555,7 +555,10 @@ class Layer(object):
                     remove.append(v)
                     continue
                 self._values.append(v)
-            tags.append(self._values.index(v))
+                value_index = len(self._values) - 1
+            else:
+                value_index = self._values.index(v)
+            tags.append(value_index)
         if remove:
             data[:] = [x for x in data if x not in remove]
         return tags
@@ -603,11 +606,15 @@ class Layer(object):
                     remove.append(k)
                     continue
                 self._values.append(v)
+                value_index = len(self._values) - 1
+            else:
+                value_index = self._values.index(v)
+
             if k not in self._keys:
                 self._layer.keys.append(k)
                 self._keys.append(k)
             tags.append(self._keys.index(k))
-            tags.append(self._values.index(v))
+            tags.append(value_index)
         for k in remove:
             del props[k]
         return tags
