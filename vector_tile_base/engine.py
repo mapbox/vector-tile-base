@@ -24,7 +24,7 @@ def command_line_to(count):
     return command_integer(2, count)
 
 def command_close_path():
-    return command_integer(7,0)
+    return command_integer(7,1)
 
 def get_command_id(command_integer):
     return command_integer & 0x7;
