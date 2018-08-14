@@ -404,10 +404,10 @@ class Layer(object):
             self._layer.name = name
         if version:
             self._layer.version = version
-        if dimensions:
+        else:
+            self._layer.version = 2
+        if dimensions and dimensions != 2:
             self._layer.dimensions = dimensions
-        elif not self._layer.HasField('dimensions'):
-            self._layer.dimensions = 2
         self._decode_keys()
         self._decode_values()
         self._build_features()
@@ -444,7 +444,7 @@ class Layer(object):
             self._keys.append(key)
 
     def _build_features(self):
-        dim = self._layer.dimensions
+        dim = self.dimensions
         for feature in self._layer.features:
             if feature.type == vector_tile_pb2.Tile.POINT:
                 self._features.append(PointFeature(feature, self, dim))
@@ -456,22 +456,22 @@ class Layer(object):
                 self._features.append(SplineFeature(feature, self, dim))
     
     def add_point_feature(self):
-        dim = self._layer.dimensions
+        dim = self.dimensions
         self._features.append(PointFeature(self._layer.features.add(), self, dim))
         return self._features[-1]
 
     def add_line_string_feature(self):
-        dim = self._layer.dimensions
+        dim = self.dimensions
         self._features.append(LineStringFeature(self._layer.features.add(), self, dim))
         return self._features[-1]
     
     def add_polygon_feature(self):
-        dim = self._layer.dimensions
+        dim = self.dimensions
         self._features.append(PolygonFeature(self._layer.features.add(), self, dim))
         return self._features[-1]
     
     def add_spline_feature(self):
-        dim = self._layer.dimensions
+        dim = self.dimensions
         self._features.append(SplineFeature(self._layer.features.add(), self, dim))
         return self._features[-1]
 
@@ -499,16 +499,16 @@ class Layer(object):
     
     @property
     def dimensions(self):
-        return self._layer.dimensions
-
+        if self._layer.HasField('dimensions'):
+            return self._layer.dimensions
+        return 2
+    
     @property
     def version(self):
-        return self._layer.version
+        if self._layer.HasField('version'):
+            return self._layer.version
+        return 2
 
-    @version.setter
-    def version(self, version):
-        self._layer.version = version
- 
     def get_attributes(self, tags):
         properties = {}
         for i in range(0,len(tags),2):
@@ -644,7 +644,7 @@ class VectorTile(object):
     def serialize(self):
         return self._tile.SerializeToString()
 
-    def add_layer(self, name, dimensions = 2, version = 2):
+    def add_layer(self, name, dimensions = None, version = None):
         self._layers.append(Layer(self._tile.layers.add(), name, dimensions, version))
         return self._layers[-1]
 
