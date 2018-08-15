@@ -54,9 +54,58 @@ def test_layer_features():
         layer.features = [1,2]
     assert len(layer.features) == 0
 
-def test_feature_properties():
+def test_feature_properties_version_2():
     vt = VectorTile()
-    layer = vt.add_layer('test')
+    layer = vt.add_layer('test', version=2)
+    feature = layer.add_point_feature()
+    assert isinstance(feature, PointFeature)
+    assert len(layer.features) == 1
+    assert feature == layer.features[0]
+    prop = feature.properties
+    assert isinstance(prop, FeatureProperties)
+    assert feature.properties == {}
+    assert prop == {}
+    prop['fun'] = 'stuff'
+    assert 'fun' in prop
+    assert prop['fun'] == 'stuff'
+    assert feature.properties['fun'] == 'stuff'
+    assert feature.properties == {'fun':'stuff'}
+    # Can set by external dictionary
+    prop_dict = { 'number': 1, 'bool': True, 'string': 'foo', 'float': 4.1 }
+    feature.properties = prop_dict
+    assert feature.properties == prop_dict
+    # Key error on not existant property
+    with pytest.raises(KeyError):
+        foo = feature.properties['doesnotexist']
+    # Type errors on invalid key types
+    with pytest.raises(TypeError):
+        feature.properties[1.234] = True
+    with pytest.raises(TypeError):
+        feature.properties[1] = True
+    with pytest.raises(TypeError):
+        foo = feature.properties[1.234]
+    with pytest.raises(TypeError):
+        foo = feature.properties[1]
+    # During setting invalid properties with bad keys or value types will just be dropped
+    prop_dict = {'foo': [1,2,3], 'fee': [{'a':'b'}, {'a':['c','d']}], 1.2341: 'stuff', 1: 'fish', 'go': False, 'double': 2.32432, 'float': Float(23432.3222) }
+    prop_dict2 = {'go': False, 'double': 2.32432, 'float': 23432.3222 }
+    feature.properties = prop_dict
+    assert feature.properties != prop_dict
+    assert feature.properties == prop_dict2
+    
+    # Now serialize the tile
+    data = vt.serialize()
+    # Reload as new tile to check that cursor moves to proper position for another add point
+    vt = VectorTile(data)
+    feature = vt.layers[0].features[0]
+    assert feature.properties['go'] == prop_dict2['go']
+    assert feature.properties['double'] == prop_dict2['double']
+    # note change is expected due to float encoding!
+    assert feature.properties['float'] == 23432.322265625 
+
+def test_feature_properties_version_3():
+    vt = VectorTile()
+    layer = vt.add_layer('test', version=3)
     feature = layer.add_point_feature()
     assert isinstance(feature, PointFeature)
     assert len(layer.features) == 1
@@ -222,9 +271,15 @@ def test_create_polygon_feature():
     feature.add_ring(polygon[1])
     assert feature.get_polygons() == [polygon, polygon]
 
-def test_create_spline_feature():
+def test_create_spline_feature_fail_v2():
     vt = VectorTile()
     layer = vt.add_layer('test')
+    with pytest.raises(Exception):
+        feature = layer.add_spline_feature()
+
+def test_create_spline_feature():
+    vt = VectorTile()
+    layer = vt.add_layer('test', version=3)
     feature = layer.add_spline_feature()
     assert isinstance(feature, SplineFeature)
     assert len(layer.features) == 1
@@ -236,4 +291,3 @@ def test_create_spline_feature():
 
     assert feature.get_control_points() == control_points
     assert feature.get_knots() == knots
-    

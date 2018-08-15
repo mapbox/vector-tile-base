@@ -471,6 +471,8 @@ class Layer(object):
         return self._features[-1]
     
     def add_spline_feature(self):
+        if self.version < 3:
+            raise Exception("Can not add splines to Version 2 or below Vector Tiles.")
         dim = self.dimensions
         self._features.append(SplineFeature(self._layer.features.add(), self, dim))
         return self._features[-1]
@@ -535,7 +537,7 @@ class Layer(object):
                 elif isinstance(v,float):
                     val = self._layer.values.add()
                     val.double_value = v
-                elif isinstance(v,list):
+                elif isinstance(v,list) and self.version > 2:
                     list_tags = self.add_attribute_list(v)
                     if len(list_tags) > 0:
                         val = self._layer.values.add()
@@ -543,7 +545,7 @@ class Layer(object):
                     else:
                         remove.append(v)
                         continue
-                elif isinstance(v, dict):
+                elif isinstance(v, dict) and self.version > 2:
                     dict_tags = self.add_attributes(v)
                     if len(dict_tags) > 0:
                         val = self._layer.values.add()
@@ -586,7 +588,7 @@ class Layer(object):
                 elif isinstance(v,float):
                     val = self._layer.values.add()
                     val.double_value = v
-                elif isinstance(v,list):
+                elif isinstance(v,list) and self.version > 2:
                     list_tags = self.add_attribute_list(v)
                     if len(list_tags) > 0:
                         val = self._layer.values.add()
@@ -594,7 +596,7 @@ class Layer(object):
                     else:
                         remove.append(k)
                         continue
-                elif isinstance(v, dict):
+                elif isinstance(v, dict) and self.version > 2:
                     dict_tags = self.add_attributes(v)
                     if len(dict_tags) > 0:
                         val = self._layer.values.add()
