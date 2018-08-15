@@ -12,10 +12,12 @@ def test_create_layer():
     assert layer.dimensions == 2
     assert layer.version == 2
     assert isinstance(layer, Layer)
-    layer = vt.add_layer('point_3d', 3)
+    with pytest.raises(Exception):
+        vt.add_layer('point_3d', 3)
+    layer = vt.add_layer('point_3d', 3, 3)
     assert layer.name == 'point_3d'
     assert layer.dimensions == 3
-    assert layer.version == 2
+    assert layer.version == 3
     assert isinstance(layer, Layer)
     layer = vt.add_layer('point_4d', 4, 4)
     assert layer.name == 'point_4d'

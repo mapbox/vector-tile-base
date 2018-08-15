@@ -404,10 +404,12 @@ class Layer(object):
             self._layer.name = name
         if version:
             self._layer.version = version
-        else:
+        elif not self._layer.HasField('version'):
             self._layer.version = 2
-        if dimensions and dimensions != 2:
+        if dimensions and dimensions > 2:
             self._layer.dimensions = dimensions
+        if self.version <= 2 and self.dimensions != 2:
+            raise Exception("Must have exactly 2 dimensions for Vector Tile 2 spec and below")
         self._decode_keys()
         self._decode_values()
         self._build_features()

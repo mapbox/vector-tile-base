@@ -1,10 +1,11 @@
 from vector_tile_base import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureProperties
 
-f = open('tests/test.mvt', 'rb')
-test_data = f.read()
-f.close()
-
 def test_decode_vector_tile():
+    # Uncomment next line to recreate test data
+    #create_decode_test_fixture()
+    f = open('tests/test.mvt', 'rb')
+    test_data = f.read()
+    f.close()
     vt = VectorTile(test_data)
     expected_id = 2
     assert len(vt.layers) == 8
@@ -110,7 +111,7 @@ def test_decode_vector_tile():
     assert layer.name == 'splines'
     assert layer.extent == 4096
     assert layer.dimensions == 2
-    assert layer.version == 2
+    assert layer.version == 3
     assert len(layer.features) == 1
     # Test layer features
     feature = layer.features[0]
@@ -139,7 +140,7 @@ def test_decode_vector_tile():
     assert layer.name == 'points_3d'
     assert layer.extent == 4096
     assert layer.dimensions == 3
-    assert layer.version == 2
+    assert layer.version == 3
     assert len(layer.features) == 4
     # Test layer features
     point_z = 10
@@ -180,7 +181,7 @@ def test_decode_vector_tile():
     assert layer.name == 'lines_3d'
     assert layer.extent == 4096
     assert layer.dimensions == 3
-    assert layer.version == 2
+    assert layer.version == 3
     assert len(layer.features) == 1
     # Test layer features
     feature = layer.features[0]
@@ -206,7 +207,7 @@ def test_decode_vector_tile():
     assert layer.name == 'polygons_3d'
     assert layer.extent == 4096
     assert layer.dimensions == 3
-    assert layer.version == 2
+    assert layer.version == 3
     assert len(layer.features) == 1
     # Test layer features
     feature = layer.features[0]
@@ -235,7 +236,7 @@ def test_decode_vector_tile():
     assert layer.name == 'splines_3d'
     assert layer.extent == 4096
     assert layer.dimensions == 3
-    assert layer.version == 2
+    assert layer.version == 3
     assert len(layer.features) == 1
     # Test layer features
     feature = layer.features[0]
@@ -255,3 +256,87 @@ def test_decode_vector_tile():
     assert len(props) == 1
     assert props['natural']
     assert props['natural'] == 'curve'
+
+def create_decode_test_fixture():
+    vt = VectorTile()
+    # layer 0
+    layer = vt.add_layer('points', dimensions=2, version=2)
+    feature = layer.add_point_feature()
+    feature.id = 2
+    feature.add_points([20,20])
+    feature.properties = { 'some': 'attr' }
+    feature = layer.add_point_feature()
+    feature.id = 3
+    feature.add_points([20,20])
+    feature.properties = { 'some': 'attr' }
+    feature = layer.add_point_feature()
+    feature.id = 4
+    feature.add_points([20,20])
+    feature.properties = { 'some': 'otherattr' }
+    feature = layer.add_point_feature()
+    feature.id = 5
+    feature.add_points([20,20])
+    feature.properties = { 'otherkey': 'attr' }
+    #layer 1
+    layer = vt.add_layer('lines', dimensions=2, version=2)
+    feature = layer.add_line_string_feature()
+    feature.id = 6
+    feature.add_line_string([[10,10],[10,20],[20,20]])
+    feature.add_line_string([[11,11],[12,13]])
+    feature.properties = { 'highway': 'primary', 'maxspeed': 50 }
+    #layer 2
+    layer = vt.add_layer('polygons', dimensions=2, version=2)
+    feature = layer.add_polygon_feature()
+    feature.id = 7
+    feature.add_ring([[0,0],[10,0],[10,10],[0,10],[0,0]])
+    feature.add_ring([[3,3],[3,5],[5,5],[3,3]])
+    feature.properties = { 'natural': 'wood' }
+    #layer 3
+    layer = vt.add_layer('splines', dimensions=2, version=3)
+    feature = layer.add_spline_feature()
+    feature.id = 8
+    feature.add_control_points([[8,10],[9,11],[11,9],[12,10]])
+    feature.add_knots([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.875, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0])
+    feature.properties = { 'natural': 'curve' }
+    # layer 4
+    layer = vt.add_layer('points_3d', dimensions=3, version=3)
+    feature = layer.add_point_feature()
+    feature.id = 10
+    feature.add_points([20,20,10])
+    feature.properties = { 'some': 'attr' }
+    feature = layer.add_point_feature()
+    feature.id = 11
+    feature.add_points([20,20,20])
+    feature.properties = { 'some': 'attr' }
+    feature = layer.add_point_feature()
+    feature.id = 12
+    feature.add_points([20,20,30])
+    feature.properties = { 'some': 'otherattr' }
+    feature = layer.add_point_feature()
+    feature.id = 13
+    feature.add_points([20,20,40])
+    feature.properties = { 'otherkey': 'attr' }
+    #layer 5
+    layer = vt.add_layer('lines_3d', dimensions=3, version=3)
+    feature = layer.add_line_string_feature()
+    feature.id = 14
+    feature.add_line_string([[10,10,10],[10,20,20],[20,20,30]])
+    feature.add_line_string([[11,11,10],[12,13,20]])
+    feature.properties = { 'highway': 'primary', 'maxspeed': 50 }
+    #layer 6
+    layer = vt.add_layer('polygons_3d', dimensions=3, version=3)
+    feature = layer.add_polygon_feature()
+    feature.id = 15
+    feature.add_ring([[0,0,10],[10,0,20],[10,10,30],[0,10,20],[0,0,10]])
+    feature.add_ring([[3,3,20],[3,5,40],[5,5,30],[3,3,20]])
+    feature.properties = { 'natural': 'wood' }
+    #layer 7
+    layer = vt.add_layer('splines_3d', dimensions=3, version=3)
+    feature = layer.add_spline_feature()
+    feature.id = 16
+    feature.add_control_points([[8,10,10],[9,11,11],[11,9,12],[12,10,13]])
+    feature.add_knots([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.875, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0])
+    feature.properties = { 'natural': 'curve' }
+    f = open('tests/test.mvt', 'wb')
+    f.write(vt.serialize())
+    f.close()
