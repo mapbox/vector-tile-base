@@ -5,9 +5,10 @@ Layer = engine.Layer
 PointFeature = engine.PointFeature
 LineStringFeature = engine.LineStringFeature
 PolygonFeature = engine.PolygonFeature
-SplineFeature = engine.SplineFeature
-FeatureProperties = engine.FeatureProperties
+CurveFeature = engine.CurveFeature
+FeatureAttributes = engine.FeatureAttributes
 Float = engine.Float
+UInt = engine.UInt
 
 __version__ = "1.0"
 

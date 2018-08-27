@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='vector_tile.proto',
   package='vector_tile',
-  serialized_pb=_b('\n\x11vector_tile.proto\x12\x0bvector_tile\"\xa4\x05\n\x04Tile\x12\'\n\x06layers\x18\x03 \x03(\x0b\x32\x17.vector_tile.Tile.Layer\x1a\xd1\x01\n\x05Value\x12\x14\n\x0cstring_value\x18\x01 \x01(\t\x12\x13\n\x0b\x66loat_value\x18\x02 \x01(\x02\x12\x14\n\x0c\x64ouble_value\x18\x03 \x01(\x01\x12\x11\n\tint_value\x18\x04 \x01(\x03\x12\x12\n\nuint_value\x18\x05 \x01(\x04\x12\x12\n\nsint_value\x18\x06 \x01(\x12\x12\x12\n\nbool_value\x18\x07 \x01(\x08\x12\x16\n\nhash_value\x18\x08 \x03(\rB\x02\x10\x01\x12\x16\n\nlist_value\x18\t \x03(\rB\x02\x10\x01*\x08\x08\n\x10\x80\x80\x80\x80\x02\x1a\x86\x01\n\x07\x46\x65\x61ture\x12\r\n\x02id\x18\x01 \x01(\x04:\x01\x30\x12\x10\n\x04tags\x18\x02 \x03(\rB\x02\x10\x01\x12\x31\n\x04type\x18\x03 \x01(\x0e\x32\x1a.vector_tile.Tile.GeomType:\x07UNKNOWN\x12\x14\n\x08geometry\x18\x04 \x03(\rB\x02\x10\x01\x12\x11\n\x05knots\x18\x05 \x03(\x02\x42\x02\x10\x01\x1a\xc1\x01\n\x05Layer\x12\x12\n\x07version\x18\x0f \x02(\r:\x01\x31\x12\x0c\n\x04name\x18\x01 \x02(\t\x12+\n\x08\x66\x65\x61tures\x18\x02 \x03(\x0b\x32\x19.vector_tile.Tile.Feature\x12\x0c\n\x04keys\x18\x03 \x03(\t\x12\'\n\x06values\x18\x04 \x03(\x0b\x32\x17.vector_tile.Tile.Value\x12\x14\n\x06\x65xtent\x18\x05 \x01(\r:\x04\x34\x30\x39\x36\x12\x12\n\ndimensions\x18\x06 \x01(\r*\x08\x08\x10\x10\x80\x80\x80\x80\x02\"K\n\x08GeomType\x12\x0b\n\x07UNKNOWN\x10\x00\x12\t\n\x05POINT\x10\x01\x12\x0e\n\nLINESTRING\x10\x02\x12\x0b\n\x07POLYGON\x10\x03\x12\n\n\x06SPLINE\x10\x04*\x05\x08\x10\x10\x80@B\x02H\x03')
+  serialized_pb=_b('\n\x11vector_tile.proto\x12\x0bvector_tile\"\xb7\x07\n\x04Tile\x12\'\n\x06layers\x18\x03 \x03(\x0b\x32\x17.vector_tile.Tile.Layer\x1a\xa1\x01\n\x05Value\x12\x14\n\x0cstring_value\x18\x01 \x01(\t\x12\x13\n\x0b\x66loat_value\x18\x02 \x01(\x02\x12\x14\n\x0c\x64ouble_value\x18\x03 \x01(\x01\x12\x11\n\tint_value\x18\x04 \x01(\x03\x12\x12\n\nuint_value\x18\x05 \x01(\x04\x12\x12\n\nsint_value\x18\x06 \x01(\x12\x12\x12\n\nbool_value\x18\x07 \x01(\x08*\x08\x08\n\x10\x80\x80\x80\x80\x02\x1a\xe7\x01\n\x07\x46\x65\x61ture\x12\r\n\x02id\x18\x01 \x01(\x04:\x01\x30\x12\x10\n\x04tags\x18\x02 \x03(\rB\x02\x10\x01\x12\x31\n\x04type\x18\x03 \x01(\x0e\x32\x1a.vector_tile.Tile.GeomType:\x07UNKNOWN\x12\x14\n\x08geometry\x18\x04 \x03(\rB\x02\x10\x01\x12\x16\n\nattributes\x18\x05 \x03(\x04\x42\x02\x10\x01\x12\x17\n\x0bgeometry_3d\x18\x06 \x03(\rB\x02\x10\x01\x12\x1b\n\x0fnode_attributes\x18\x07 \x03(\x04\x42\x02\x10\x01\x12\x11\n\x05knots\x18\x08 \x03(\x02\x42\x02\x10\x01\x12\x11\n\tstring_id\x18\n \x01(\t\x1a\xb1\x01\n\rAttributePool\x12\x0c\n\x04keys\x18\x01 \x03(\t\x12\x15\n\rstring_values\x18\x02 \x03(\t\x12\x18\n\x0c\x66loat_values\x18\x03 \x03(\x02\x42\x02\x10\x01\x12\x19\n\rdouble_values\x18\x04 \x03(\x01\x42\x02\x10\x01\x12!\n\x15signed_integer_values\x18\x05 \x03(\x10\x42\x02\x10\x01\x12#\n\x17unsigned_integer_values\x18\x06 \x03(\x06\x42\x02\x10\x01\x1a\xe6\x01\n\x05Layer\x12\x12\n\x07version\x18\x0f \x02(\r:\x01\x31\x12\x0c\n\x04name\x18\x01 \x02(\t\x12+\n\x08\x66\x65\x61tures\x18\x02 \x03(\x0b\x32\x19.vector_tile.Tile.Feature\x12\x0c\n\x04keys\x18\x03 \x03(\t\x12\'\n\x06values\x18\x04 \x03(\x0b\x32\x17.vector_tile.Tile.Value\x12\x14\n\x06\x65xtent\x18\x05 \x01(\r:\x04\x34\x30\x39\x36\x12\x37\n\x0e\x61ttribute_pool\x18\x07 \x01(\x0b\x32\x1f.vector_tile.Tile.AttributePool*\x08\x08\x10\x10\x80\x80\x80\x80\x02\"T\n\x08GeomType\x12\x0b\n\x07UNKNOWN\x10\x00\x12\t\n\x05POINT\x10\x01\x12\x0e\n\nLINESTRING\x10\x02\x12\x0b\n\x07POLYGON\x10\x03\x12\t\n\x05\x43URVE\x10\x04\x12\x08\n\x04\x41REA\x10\x05*\x05\x08\x10\x10\x80@B\x02H\x03')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -47,14 +47,18 @@ _TILE_GEOMTYPE = _descriptor.EnumDescriptor(
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='SPLINE', index=4, number=4,
+      name='CURVE', index=4, number=4,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='AREA', index=5, number=5,
       options=None,
       type=None),
   ],
   containing_type=None,
   options=None,
-  serialized_start=629,
-  serialized_end=704,
+  serialized_start=895,
+  serialized_end=979,
 )
 _sym_db.RegisterEnumDescriptor(_TILE_GEOMTYPE)
 
@@ -115,20 +119,6 @@ _TILE_VALUE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
-    _descriptor.FieldDescriptor(
-      name='hash_value', full_name='vector_tile.Tile.Value.hash_value', index=7,
-      number=8, type=13, cpp_type=3, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))),
-    _descriptor.FieldDescriptor(
-      name='list_value', full_name='vector_tile.Tile.Value.list_value', index=8,
-      number=9, type=13, cpp_type=3, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))),
   ],
   extensions=[
   ],
@@ -141,7 +131,7 @@ _TILE_VALUE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=85,
-  serialized_end=294,
+  serialized_end=246,
 )
 
 _TILE_FEATURE = _descriptor.Descriptor(
@@ -180,8 +170,100 @@ _TILE_FEATURE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))),
     _descriptor.FieldDescriptor(
-      name='knots', full_name='vector_tile.Tile.Feature.knots', index=4,
-      number=5, type=2, cpp_type=6, label=3,
+      name='attributes', full_name='vector_tile.Tile.Feature.attributes', index=4,
+      number=5, type=4, cpp_type=4, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))),
+    _descriptor.FieldDescriptor(
+      name='geometry_3d', full_name='vector_tile.Tile.Feature.geometry_3d', index=5,
+      number=6, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))),
+    _descriptor.FieldDescriptor(
+      name='node_attributes', full_name='vector_tile.Tile.Feature.node_attributes', index=6,
+      number=7, type=4, cpp_type=4, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))),
+    _descriptor.FieldDescriptor(
+      name='knots', full_name='vector_tile.Tile.Feature.knots', index=7,
+      number=8, type=2, cpp_type=6, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))),
+    _descriptor.FieldDescriptor(
+      name='string_id', full_name='vector_tile.Tile.Feature.string_id', index=8,
+      number=10, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=249,
+  serialized_end=480,
+)
+
+_TILE_ATTRIBUTEPOOL = _descriptor.Descriptor(
+  name='AttributePool',
+  full_name='vector_tile.Tile.AttributePool',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='keys', full_name='vector_tile.Tile.AttributePool.keys', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='string_values', full_name='vector_tile.Tile.AttributePool.string_values', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='float_values', full_name='vector_tile.Tile.AttributePool.float_values', index=2,
+      number=3, type=2, cpp_type=6, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))),
+    _descriptor.FieldDescriptor(
+      name='double_values', full_name='vector_tile.Tile.AttributePool.double_values', index=3,
+      number=4, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))),
+    _descriptor.FieldDescriptor(
+      name='signed_integer_values', full_name='vector_tile.Tile.AttributePool.signed_integer_values', index=4,
+      number=5, type=16, cpp_type=2, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))),
+    _descriptor.FieldDescriptor(
+      name='unsigned_integer_values', full_name='vector_tile.Tile.AttributePool.unsigned_integer_values', index=5,
+      number=6, type=6, cpp_type=4, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -197,8 +279,8 @@ _TILE_FEATURE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=297,
-  serialized_end=431,
+  serialized_start=483,
+  serialized_end=660,
 )
 
 _TILE_LAYER = _descriptor.Descriptor(
@@ -251,9 +333,9 @@ _TILE_LAYER = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='dimensions', full_name='vector_tile.Tile.Layer.dimensions', index=6,
-      number=6, type=13, cpp_type=3, label=1,
-      has_default_value=False, default_value=0,
+      name='attribute_pool', full_name='vector_tile.Tile.Layer.attribute_pool', index=6,
+      number=7, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -268,8 +350,8 @@ _TILE_LAYER = _descriptor.Descriptor(
   extension_ranges=[(16, 536870912), ],
   oneofs=[
   ],
-  serialized_start=434,
-  serialized_end=627,
+  serialized_start=663,
+  serialized_end=893,
 )
 
 _TILE = _descriptor.Descriptor(
@@ -289,7 +371,7 @@ _TILE = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[_TILE_VALUE, _TILE_FEATURE, _TILE_LAYER, ],
+  nested_types=[_TILE_VALUE, _TILE_FEATURE, _TILE_ATTRIBUTEPOOL, _TILE_LAYER, ],
   enum_types=[
     _TILE_GEOMTYPE,
   ],
@@ -299,14 +381,16 @@ _TILE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=35,
-  serialized_end=711,
+  serialized_end=986,
 )
 
 _TILE_VALUE.containing_type = _TILE
 _TILE_FEATURE.fields_by_name['type'].enum_type = _TILE_GEOMTYPE
 _TILE_FEATURE.containing_type = _TILE
+_TILE_ATTRIBUTEPOOL.containing_type = _TILE
 _TILE_LAYER.fields_by_name['features'].message_type = _TILE_FEATURE
 _TILE_LAYER.fields_by_name['values'].message_type = _TILE_VALUE
+_TILE_LAYER.fields_by_name['attribute_pool'].message_type = _TILE_ATTRIBUTEPOOL
 _TILE_LAYER.containing_type = _TILE
 _TILE.fields_by_name['layers'].message_type = _TILE_LAYER
 _TILE_GEOMTYPE.containing_type = _TILE
@@ -328,6 +412,13 @@ Tile = _reflection.GeneratedProtocolMessageType('Tile', (_message.Message,), dic
     ))
   ,
 
+  AttributePool = _reflection.GeneratedProtocolMessageType('AttributePool', (_message.Message,), dict(
+    DESCRIPTOR = _TILE_ATTRIBUTEPOOL,
+    __module__ = 'vector_tile_pb2'
+    # @@protoc_insertion_point(class_scope:vector_tile.Tile.AttributePool)
+    ))
+  ,
+
   Layer = _reflection.GeneratedProtocolMessageType('Layer', (_message.Message,), dict(
     DESCRIPTOR = _TILE_LAYER,
     __module__ = 'vector_tile_pb2'
@@ -341,19 +432,30 @@ Tile = _reflection.GeneratedProtocolMessageType('Tile', (_message.Message,), dic
 _sym_db.RegisterMessage(Tile)
 _sym_db.RegisterMessage(Tile.Value)
 _sym_db.RegisterMessage(Tile.Feature)
+_sym_db.RegisterMessage(Tile.AttributePool)
 _sym_db.RegisterMessage(Tile.Layer)
 
 
 DESCRIPTOR.has_options = True
 DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('H\003'))
-_TILE_VALUE.fields_by_name['hash_value'].has_options = True
-_TILE_VALUE.fields_by_name['hash_value']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
-_TILE_VALUE.fields_by_name['list_value'].has_options = True
-_TILE_VALUE.fields_by_name['list_value']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
 _TILE_FEATURE.fields_by_name['tags'].has_options = True
 _TILE_FEATURE.fields_by_name['tags']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
 _TILE_FEATURE.fields_by_name['geometry'].has_options = True
 _TILE_FEATURE.fields_by_name['geometry']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
+_TILE_FEATURE.fields_by_name['attributes'].has_options = True
+_TILE_FEATURE.fields_by_name['attributes']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
+_TILE_FEATURE.fields_by_name['geometry_3d'].has_options = True
+_TILE_FEATURE.fields_by_name['geometry_3d']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
+_TILE_FEATURE.fields_by_name['node_attributes'].has_options = True
+_TILE_FEATURE.fields_by_name['node_attributes']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
 _TILE_FEATURE.fields_by_name['knots'].has_options = True
 _TILE_FEATURE.fields_by_name['knots']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
+_TILE_ATTRIBUTEPOOL.fields_by_name['float_values'].has_options = True
+_TILE_ATTRIBUTEPOOL.fields_by_name['float_values']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
+_TILE_ATTRIBUTEPOOL.fields_by_name['double_values'].has_options = True
+_TILE_ATTRIBUTEPOOL.fields_by_name['double_values']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
+_TILE_ATTRIBUTEPOOL.fields_by_name['signed_integer_values'].has_options = True
+_TILE_ATTRIBUTEPOOL.fields_by_name['signed_integer_values']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
+_TILE_ATTRIBUTEPOOL.fields_by_name['unsigned_integer_values'].has_options = True
+_TILE_ATTRIBUTEPOOL.fields_by_name['unsigned_integer_values']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\020\001'))
 # @@protoc_insertion_point(module_scope)

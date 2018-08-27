@@ -10,7 +10,8 @@ message Tile {
              POINT = 1;
              LINESTRING = 2;
              POLYGON = 3;
-             SPLINE = 4;
+             CURVE = 4;
+             AREA = 5;
         }
 
         // Variant type encoding
@@ -24,8 +25,6 @@ message Tile {
                 optional uint64 uint_value = 5;
                 optional sint64 sint_value = 6;
                 optional bool bool_value = 7;
-                repeated uint32 hash_value = 8 [ packed = true ];
-                repeated uint32 list_value = 9 [ packed = true ];
 
                 extensions 10 to max;
         }
@@ -48,7 +47,24 @@ message Tile {
                 // section 4.3 of the specification.
                 repeated uint32 geometry = 4 [ packed = true ];
 
-                repeated float knots = 5 [ packed = true ];
+                repeated uint64 attributes = 5 [ packed = true ];
+                
+                repeated uint32 geometry_3d = 6 [ packed = true ];
+                
+                repeated uint64 node_attributes = 7 [ packed = true ];
+                
+                repeated float knots = 8 [ packed = true ];
+
+                optional string string_id = 10;
+        }
+
+        message AttributePool {
+                repeated string keys = 1;
+                repeated string string_values = 2;
+                repeated float float_values = 3 [ packed = true ];
+                repeated double double_values = 4 [ packed = true ];
+                repeated sfixed64 signed_integer_values = 5 [ packed = true ];
+                repeated fixed64 unsigned_integer_values = 6 [ packed = true ];
         }
 
         // Layers are described in section 4.1 of the specification
@@ -74,7 +90,7 @@ message Tile {
                 // See https://github.com/mapbox/vector-tile-spec/issues/47
                 optional uint32 extent = 5 [ default = 4096 ];
 
-                optional uint32 dimensions = 6;
+                optional AttributePool attribute_pool = 7;
 
                 extensions 16 to max;
         }
