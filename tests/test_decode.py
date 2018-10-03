@@ -2,7 +2,7 @@ from vector_tile_base import VectorTile, CurveFeature, PointFeature, PolygonFeat
 
 def test_decode_vector_tile():
     # Uncomment next line to recreate test data
-    create_decode_test_fixture()
+    #create_decode_test_fixture()
     f = open('tests/test.mvt', 'rb')
     test_data = f.read()
     f.close()
