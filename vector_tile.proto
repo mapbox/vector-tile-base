@@ -29,6 +29,20 @@ message Tile {
                 extensions 10 to max;
         }
 
+        message Scaling {
+                // Formula for values in dimension:
+                // value = global_offset + scale * (delta_encoded_value + offset)
+                 // Individual offset for this specific tile
+                optional sint64 offset = 1;
+                 // Only one of scale_int or scale_double may appear.
+                // If neither scale_int nor scale_double appears, scale = 1.0.
+                optional double multiplier = 2;
+                 // Only one of global_offset_int or global_offset_double may appear.
+                // If neither global_offset_int nor global_offset_double appears,
+                // global_offset = 0.0.
+                optional double base = 3;
+        }
+        
         // Features are described in section 4.2 of the specification
         message Feature {
                 optional uint64 id = 1 [ default = 0 ];
@@ -49,22 +63,14 @@ message Tile {
 
                 repeated uint64 attributes = 5 [ packed = true ];
                 
-                repeated uint32 geometry_3d = 6 [ packed = true ];
+                repeated uint64 geometric_attributes = 6 [ packed = true ];
                 
-                repeated uint64 node_attributes = 7 [ packed = true ];
+                repeated sint64 elevation = 7 [ packed = true];
                 
                 repeated float knots = 8 [ packed = true ];
+                
 
                 optional string string_id = 10;
-        }
-
-        message AttributePool {
-                repeated string keys = 1;
-                repeated string string_values = 2;
-                repeated float float_values = 3 [ packed = true ];
-                repeated double double_values = 4 [ packed = true ];
-                repeated sfixed64 signed_integer_values = 5 [ packed = true ];
-                repeated fixed64 unsigned_integer_values = 6 [ packed = true ];
         }
 
         // Layers are described in section 4.1 of the specification
@@ -90,7 +96,17 @@ message Tile {
                 // See https://github.com/mapbox/vector-tile-spec/issues/47
                 optional uint32 extent = 5 [ default = 4096 ];
 
-                optional AttributePool attribute_pool = 7;
+                // Describe the number of extra dimensions that will be expected in the 
+                // extended_geometry field of Features. 
+                repeated string string_values = 6;
+                repeated float float_values = 7 [ packed = true ];
+                repeated double double_values = 8 [ packed = true ];
+                repeated fixed64 int_values = 9 [ packed = true ];
+
+                optional Scaling elevation_scaling = 10;
+
+                // Accessed by index in order of layer here.
+                repeated Scaling attribute_scalings = 11;
 
                 extensions 16 to max;
         }

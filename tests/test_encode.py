@@ -150,7 +150,7 @@ def test_create_point_feature():
     assert isinstance(feature, PointFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
-    assert feature.dimensions == 2
+    assert not feature.has_elevation
     feature.add_points([10,11])
     geometry = feature.get_points()
     assert geometry[0] == [10,11]
@@ -180,16 +180,14 @@ def test_create_point_feature_3d():
     layer = vt.add_layer('test')
     ## Should fail first because layer is a version 2 layer
     with pytest.raises(Exception):
-        feature = layer.add_point_feature(dimensions=3)
+        feature = layer.add_point_feature(has_elevation=True)
     vt = VectorTile()
     layer = vt.add_layer('test', version=3)
-    with pytest.raises(Exception):
-        feature = layer.add_point_feature(dimensions=99)
-    feature = layer.add_point_feature(dimensions=3)
+    feature = layer.add_point_feature(has_elevation=True)
     assert isinstance(feature, PointFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
-    assert feature.dimensions == 3
+    assert feature.has_elevation
     ## Should fail to add 2 point list
     with pytest.raises(IndexError):
         feature.add_points([10,11])
@@ -224,7 +222,7 @@ def test_create_line_feature():
     assert isinstance(feature, LineStringFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
-    assert feature.dimensions == 2
+    assert not feature.has_elevation
     line_string = [[10,11],[10,12],[10,13],[10,14]]
     feature.add_line_string(line_string)
     # note that we pull back possible multi line string here
@@ -262,14 +260,14 @@ def test_create_line_feature_3d():
     layer = vt.add_layer('test')
     # Should raise because is version 2 tile
     with pytest.raises(Exception):
-        feature = layer.add_line_string_feature(dimensions=3)
+        feature = layer.add_line_string_feature(has_elevation=True)
     vt = VectorTile()
     layer = vt.add_layer('test', version=3)
-    feature = layer.add_line_string_feature(dimensions=3)
+    feature = layer.add_line_string_feature(has_elevation=True)
     assert isinstance(feature, LineStringFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
-    assert feature.dimensions == 3
+    assert feature.has_elevation
     line_string = [[10,11,12],[10,12,13],[10,13,14],[10,14,15]]
     feature.add_line_string(line_string)
     # note that we pull back possible multi line string here
@@ -309,7 +307,7 @@ def test_create_polygon_feature():
     assert isinstance(feature, PolygonFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
-    assert feature.dimensions == 2
+    assert not feature.has_elevation
     polygon = [[[0,0],[10,0],[10,10],[0,10],[0,0]],[[3,3],[3,5],[5,5],[3,3]]]
     feature.add_ring(polygon[0])
     feature.add_ring(polygon[1])
@@ -373,59 +371,59 @@ def test_create_polygon_feature_3d():
     layer = vt.add_layer('test')
     # Should not be allowed with version 2 layer
     with pytest.raises(Exception):
-        feature = layer.add_polygon_feature(dimensions=3)
+        feature = layer.add_polygon_feature(has_elevation=True)
     vt = VectorTile()
     layer = vt.add_layer('test', version=3)
-    feature = layer.add_polygon_feature(dimensions=3)
+    feature = layer.add_polygon_feature(has_elevation=True)
     assert isinstance(feature, PolygonFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
-    assert feature.dimensions == 3
-    polygon = [[[[0,0,1],[10,0,1],[10,10,1],[0,10,1],[0,0,1]]],[[[3,3,1],[3,5,1],[5,5,1],[3,3,1]]]]
-    feature.add_ring(polygon[0][0])
-    feature.add_ring(polygon[1][0])
-    assert feature.get_rings() == [polygon[0][0], polygon[1][0]]
-    assert feature.get_polygons() == polygon
+    assert feature.has_elevation
+    polygon = [[[0,0,1],[10,0,1],[10,10,1],[0,10,1],[0,0,1]],[[3,3,1],[3,5,1],[5,5,1],[3,3,1]]]
+    feature.add_ring(polygon[0])
+    feature.add_ring(polygon[1])
+    assert feature.get_rings() == polygon
+    assert feature.get_polygons() == [polygon]
     
     bad_ring1 = [[0,0,1],[1,0,1]]
     with pytest.raises(Exception):
         feature.add_ring(bad_ring)
-    assert feature.get_polygons() == polygon
+    assert feature.get_polygons() == [polygon]
     
     bad_ring2 = [[0,0,1],[1,0,1],[0,0,1]]
     with pytest.raises(Exception):
         feature.add_ring(bad_ring2)
-    assert feature.get_polygons() == polygon
+    assert feature.get_polygons() == [polygon]
     
     bad_ring3 = [[0,0,1],[1,0,1],[1,1,1],[1,1],[0,0,1]]
     with pytest.raises(IndexError):
         feature.add_ring(bad_ring3)
-    assert feature.get_polygons() == polygon
+    assert feature.get_polygons() == [polygon]
 
-    feature.add_ring(polygon[0][0])
-    feature.add_ring(polygon[1][0])
-    assert feature.get_polygons() == [polygon[0], polygon[1], polygon[0], polygon[1]]
+    feature.add_ring(polygon[0])
+    feature.add_ring(polygon[1])
+    assert feature.get_polygons() == [polygon, polygon]
 
     # clear current geometry
     feature.clear_geometry()
     assert feature.get_rings() == []
     assert feature.get_polygons() == []
 
-    feature.add_ring(polygon[0][0])
-    feature.add_ring(polygon[1][0])
-    assert feature.get_rings() == [polygon[0][0], polygon[1][0]]
-    assert feature.get_polygons() == polygon
+    feature.add_ring(polygon[0])
+    feature.add_ring(polygon[1])
+    assert feature.get_rings() == polygon
+    assert feature.get_polygons() == [polygon]
     
     # Now serialize the tile
     data = vt.serialize()
     # Reload as new tile to check that cursor moves to proper position for another add point
     vt = VectorTile(data)
     feature = vt.layers[0].features[0]
-    assert feature.get_rings() == [polygon[0][0], polygon[1][0]]
-    assert feature.get_polygons() == polygon
-    feature.add_ring(polygon[0][0])
-    feature.add_ring(polygon[1][0])
-    assert feature.get_polygons() == [polygon[0], polygon[1], polygon[0], polygon[1]]
+    assert feature.get_rings() == polygon
+    assert feature.get_polygons() == [polygon]
+    feature.add_ring(polygon[0])
+    feature.add_ring(polygon[1])
+    assert feature.get_polygons() == [polygon, polygon]
 
 def test_create_curve_feature_fail_v2():
     vt = VectorTile()
@@ -440,7 +438,7 @@ def test_create_curve_feature():
     assert isinstance(feature, CurveFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
-    assert feature.dimensions == 2
+    assert not feature.has_elevation
     
     bad_control_points1 = [[8,10]]
     with pytest.raises(Exception):
@@ -460,11 +458,11 @@ def test_create_curve_feature():
 def test_create_curve_feature_3d():
     vt = VectorTile()
     layer = vt.add_layer('test', version=3)
-    feature = layer.add_curve_feature(dimensions=3)
+    feature = layer.add_curve_feature(has_elevation=True)
     assert isinstance(feature, CurveFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
-    assert feature.dimensions == 3
+    assert feature.has_elevation
     
     bad_control_points1 = [[8,10,1]]
     with pytest.raises(Exception):

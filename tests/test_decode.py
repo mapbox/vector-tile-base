@@ -2,7 +2,7 @@ from vector_tile_base import VectorTile, CurveFeature, PointFeature, PolygonFeat
 
 def test_decode_vector_tile():
     # Uncomment next line to recreate test data
-    #create_decode_test_fixture()
+    create_decode_test_fixture()
     f = open('tests/test.mvt', 'rb')
     test_data = f.read()
     f.close()
@@ -22,7 +22,7 @@ def test_decode_vector_tile():
         assert isinstance(feature, PointFeature)
         assert feature.type == 'point'
         assert feature.id == expected_id
-        assert feature.dimensions == 2
+        assert not feature.has_elevation
         geometry = feature.get_points()
         assert geometry == feature.get_geometry()
         assert isinstance(geometry, list)
@@ -61,7 +61,7 @@ def test_decode_vector_tile():
     assert isinstance(feature, LineStringFeature)
     assert feature.type == 'line_string'
     assert feature.id == expected_id
-    assert feature.dimensions == 2
+    assert not feature.has_elevation
     expected_id += 1
     geometry = feature.get_line_strings()
     assert geometry == feature.get_geometry()
@@ -88,7 +88,7 @@ def test_decode_vector_tile():
     assert isinstance(feature, PolygonFeature)
     assert feature.type == 'polygon'
     assert feature.id == expected_id
-    assert feature.dimensions == 2
+    assert not feature.has_elevation
     expected_id += 1
     geometry = feature.get_rings()
     multi_polygons = feature.get_polygons()
@@ -117,7 +117,7 @@ def test_decode_vector_tile():
     assert isinstance(feature, CurveFeature)
     assert feature.type == 'curve'
     assert feature.id == expected_id
-    assert feature.dimensions == 2
+    assert not feature.has_elevation
     expected_id += 1
     control_points = feature.get_control_points()
     assert isinstance(control_points, list)
@@ -147,7 +147,7 @@ def test_decode_vector_tile():
         assert isinstance(feature, PointFeature)
         assert feature.type == 'point'
         assert feature.id == expected_id
-        assert feature.dimensions == 3
+        assert feature.has_elevation
         geometry = feature.get_points()
         assert isinstance(geometry, list)
         assert len(geometry) == 1
@@ -187,7 +187,7 @@ def test_decode_vector_tile():
     assert isinstance(feature, LineStringFeature)
     assert feature.type == 'line_string'
     assert feature.id == expected_id
-    assert feature.dimensions == 3
+    assert feature.has_elevation
     expected_id += 1
     geometry = feature.get_line_strings()
     assert isinstance(geometry, list)
@@ -213,15 +213,14 @@ def test_decode_vector_tile():
     assert isinstance(feature, PolygonFeature)
     assert feature.type == 'polygon'
     assert feature.id == expected_id
-    assert feature.dimensions == 3
+    assert feature.has_elevation
     expected_id += 1
     geometry = feature.get_rings()
     multi_polygons = feature.get_polygons()
     assert isinstance(geometry, list)
     assert isinstance(multi_polygons, list)
-    assert len(multi_polygons) == 2
-    assert geometry[0] == multi_polygons[0][0]
-    assert geometry[1] == multi_polygons[1][0]
+    assert len(multi_polygons) == 1
+    assert geometry == multi_polygons[0]
     assert len(geometry) == 2
     assert geometry == [[[0,0,10],[10,0,20],[10,10,30],[0,10,20],[0,0,10]],[[3,3,20],[3,5,40],[5,5,30],[3,3,20]]]
     props = feature.attributes
@@ -242,7 +241,7 @@ def test_decode_vector_tile():
     assert isinstance(feature, CurveFeature)
     assert feature.type == 'curve'
     assert feature.id == expected_id
-    assert feature.dimensions == 3
+    assert feature.has_elevation
     expected_id += 1
     control_points = feature.get_control_points()
     assert isinstance(control_points, list)
@@ -261,78 +260,78 @@ def create_decode_test_fixture():
     vt = VectorTile()
     # layer 0
     layer = vt.add_layer('points', version=2)
-    feature = layer.add_point_feature(dimensions=2)
+    feature = layer.add_point_feature(has_elevation=False)
     feature.id = 2
     feature.add_points([20,20])
     feature.attributes = { 'some': 'attr' }
-    feature = layer.add_point_feature(dimensions=2)
+    feature = layer.add_point_feature(has_elevation=False)
     feature.id = 3
     feature.add_points([20,20])
     feature.attributes = { 'some': 'attr' }
-    feature = layer.add_point_feature(dimensions=2)
+    feature = layer.add_point_feature(has_elevation=False)
     feature.id = 4
     feature.add_points([20,20])
     feature.attributes = { 'some': 'otherattr' }
-    feature = layer.add_point_feature(dimensions=2)
+    feature = layer.add_point_feature(has_elevation=False)
     feature.id = 5
     feature.add_points([20,20])
     feature.attributes = { 'otherkey': 'attr' }
     #layer 1
     layer = vt.add_layer('lines', version=2)
-    feature = layer.add_line_string_feature(dimensions=2)
+    feature = layer.add_line_string_feature(has_elevation=False)
     feature.id = 6
     feature.add_line_string([[10,10],[10,20],[20,20]])
     feature.add_line_string([[11,11],[12,13]])
     feature.attributes = { 'highway': 'primary', 'maxspeed': 50 }
     #layer 2
     layer = vt.add_layer('polygons', version=2)
-    feature = layer.add_polygon_feature(dimensions=2)
+    feature = layer.add_polygon_feature(has_elevation=False)
     feature.id = 7
     feature.add_ring([[0,0],[10,0],[10,10],[0,10],[0,0]])
     feature.add_ring([[3,3],[3,5],[5,5],[3,3]])
     feature.attributes = { 'natural': 'wood' }
     #layer 3
     layer = vt.add_layer('curves', version=3)
-    feature = layer.add_curve_feature(dimensions=2)
+    feature = layer.add_curve_feature(has_elevation=False)
     feature.id = 8
     feature.add_control_points([[8,10],[9,11],[11,9],[12,10]])
     feature.add_knots([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.875, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0])
     feature.attributes = { 'natural': 'curve' }
     # layer 4
     layer = vt.add_layer('points_3d', version=3)
-    feature = layer.add_point_feature(dimensions=3)
+    feature = layer.add_point_feature(has_elevation=True)
     feature.id = 10
     feature.add_points([20,20,10])
     feature.attributes = { 'some': 'attr' }
-    feature = layer.add_point_feature(dimensions=3)
+    feature = layer.add_point_feature(has_elevation=True)
     feature.id = 11
     feature.add_points([20,20,20])
     feature.attributes = { 'some': 'attr' }
-    feature = layer.add_point_feature(dimensions=3)
+    feature = layer.add_point_feature(has_elevation=True)
     feature.id = 12
     feature.add_points([20,20,30])
     feature.attributes = { 'some': 'otherattr' }
-    feature = layer.add_point_feature(dimensions=3)
+    feature = layer.add_point_feature(has_elevation=True)
     feature.id = 13
     feature.add_points([20,20,40])
     feature.attributes = { 'otherkey': 'attr' }
     #layer 5
     layer = vt.add_layer('lines_3d', version=3)
-    feature = layer.add_line_string_feature(dimensions=3)
+    feature = layer.add_line_string_feature(has_elevation=True)
     feature.id = 14
     feature.add_line_string([[10,10,10],[10,20,20],[20,20,30]])
     feature.add_line_string([[11,11,10],[12,13,20]])
     feature.attributes = { 'highway': 'primary', 'maxspeed': 50 }
     #layer 6
     layer = vt.add_layer('polygons_3d', version=3)
-    feature = layer.add_polygon_feature(dimensions=3)
+    feature = layer.add_polygon_feature(has_elevation=True)
     feature.id = 15
     feature.add_ring([[0,0,10],[10,0,20],[10,10,30],[0,10,20],[0,0,10]])
     feature.add_ring([[3,3,20],[3,5,40],[5,5,30],[3,3,20]])
     feature.attributes = { 'natural': 'wood' }
     #layer 7
     layer = vt.add_layer('curves_3d', version=3)
-    feature = layer.add_curve_feature(dimensions=3)
+    feature = layer.add_curve_feature(has_elevation=True)
     feature.id = 16
     feature.add_control_points([[8,10,10],[9,11,11],[11,9,12],[12,10,13]])
     feature.add_knots([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.875, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0])
