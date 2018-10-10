@@ -77,15 +77,17 @@ def complex_value_integer(cmd_id, param):
 
 class Float(float):
     
-    def __new(self, val):
-        return float.__new__(self, val)
-    def __init__(self, val):
-        float.__init__(val)
+    def __new__(self, *args, **kwargs):
+        return float.__new__(self, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        float.__init__(*args, **kwargs)
 
 class UInt(long):
     
+    def __new__(self, *args, **kwargs):
+        return long.__new__(self, *args, **kwargs)
     def __init__(self, *args, **kwargs):
-        long.__init__(self, *args, **kwargs)
+        long.__init__(*args, **kwargs)
 
 def scaling_calculation(precision, min_float, max_float):
     if min_float >= max_float:
@@ -127,7 +129,7 @@ class FloatList(list):
             new_args = [new_list]
             new_args.extend(args[1:])
             args = tuple(new_args)
-        list.__init__(self, *args, **kwargs)
+        list.__init__(*args, **kwargs)
 
     def append_value(self, value):
         if value is None:
