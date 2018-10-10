@@ -28,6 +28,7 @@ try:
     other_str = unicode
 except NameError:
     other_str = bytes
+    long = int
 
 def zig_zag_encode(val):
     return (int(val) << 1) ^ (int(val) >> 31)
