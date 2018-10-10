@@ -35,7 +35,7 @@ def calculate_size(some_data):
 def test_scaling_range():
     minf = 0.0
     maxf = 10.0**8
-    dlist = [uniform(-maxf, maxf) for x in xrange(1000)]
+    dlist = [uniform(-maxf, maxf) for x in range(1000)]
     precision = 10**-6
     out = scaling_calculation(precision, minf, maxf)
     ilist = encode_to_int(dlist, out['sF'], out['base'], 0)

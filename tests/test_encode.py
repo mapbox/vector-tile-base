@@ -181,14 +181,14 @@ def test_feature_attributes_version_3():
     # specialized double encoding with scaling should result in approximate equality
     assert isinstance(feature.attributes['doubleList'], list)
     dlist = feature.attributes['doubleList']
-    for i in xrange(len(dlist)):
+    for i in range(len(dlist)):
         if dvalues[i] is None:
             assert dlist[i] is None
         else:
             assert abs(dvalues[i] - dlist[i]) < 10.0**-6
     assert isinstance(feature.attributes['otherDoubleList'], list)
     dlist = feature.attributes['otherDoubleList']
-    for i in xrange(len(dlist)):
+    for i in range(len(dlist)):
         if dvalues[i] is None:
             assert dlist[i] is None
         else:
