@@ -77,8 +77,10 @@ def complex_value_integer(cmd_id, param):
 
 class Float(float):
     
-    def __init__(self, *args, **kwargs):
-        float.__init__(self, *args, **kwargs)
+    def __new(self, val):
+        return float.__new__(self, val)
+    def __init__(self, val):
+        float.__init__(val)
 
 class UInt(long):
     
