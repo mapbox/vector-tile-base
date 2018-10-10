@@ -733,7 +733,7 @@ class Layer(object):
     
     def _decode_attribute_scalings(self):
         self._attribute_scalings = []
-        for i in xrange(len(self._layer.attribute_scalings)):
+        for i in range(len(self._layer.attribute_scalings)):
             self._attribute_scalings.append(Scaling(self._layer.attribute_scalings[i], index=i))
     
     def _decode_values(self):
