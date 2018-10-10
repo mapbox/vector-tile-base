@@ -1,5 +1,5 @@
 import pytest
-from vector_tile_base import VectorTile, CurveFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureAttributes, Float
+from vector_tile_base import VectorTile, CurveFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureAttributes, Float, FloatList
 
 def test_no_layers():
     vt = VectorTile()
@@ -124,9 +124,45 @@ def test_feature_attributes_version_3():
         foo = feature.attributes[1.234]
     with pytest.raises(TypeError):
         foo = feature.attributes[1]
+
+    dvalues = [1.0, 2.0, None, 2.3, 4.3, None, None, 15.0, 22.5]
+    scaling1 = layer.add_attribute_scaling(precision=10.0**-6, min_value=1.0, max_value=25.0)
+    assert scaling1.index == 0
+    assert scaling1.offset == 0
+    assert scaling1.base == 1.0
+    assert scaling1.multiplier == 9.5367431640625e-07
+
+    # roughly 10**-8 precision
+    scaling2 = layer.add_attribute_scaling(offset=10, base=8.0, multiplier=7.450580596923828e-09)
+    assert scaling2.index == 1
+    assert scaling2.offset == 10
+    assert scaling2.base == 8.0
+    assert scaling2.multiplier == 7.450580596923828e-09
+
+    flist1 = FloatList(scaling1, dvalues)
+    flist2 = FloatList(scaling2, dvalues)
+    
     # During setting invalid attributes with bad keys or value types will just be dropped
-    prop_dict = {'foo': [1,2,3], 'fee': [{'a':'b'}, {'a':['c','d']}], 1.2341: 'stuff', 1: 'fish', 'go': False, 'double': 2.32432, 'float': Float(23432.3222) }
-    prop_dict2 = {'foo': [1,2,3], 'fee': [{'a':'b'}, {'a':['c','d']}], 'go': False, 'double': 2.32432, 'float': 23432.3222 }
+    prop_dict = {
+        'foo': [1,2,3], 
+        'fee': [{'a':'b'}, {'a':['c','d']}], 
+        1.2341: 'stuff', 
+        1: 'fish', 
+        'go': False,
+        'double': 2.32432,
+        'float': Float(23432.3222),
+        'doubleList': flist1,
+        'otherDoubleList': flist2
+    }
+    prop_dict2 = {
+        'foo': [1,2,3],
+        'fee': [{'a':'b'}, {'a':['c','d']}],
+        'go': False,
+        'double': 2.32432,
+        'float': Float(23432.3222),
+        'doubleList': flist1,
+        'otherDoubleList': flist2
+    }
     feature.attributes = prop_dict
     assert feature.attributes != prop_dict
     assert feature.attributes == prop_dict2
@@ -141,7 +177,22 @@ def test_feature_attributes_version_3():
     assert feature.attributes['go'] == prop_dict2['go']
     assert feature.attributes['double'] == prop_dict2['double']
     # note change is expected due to float encoding!
-    assert feature.attributes['float'] == 23432.322265625 
+    assert feature.attributes['float'] == 23432.322265625
+    # specialized double encoding with scaling should result in approximate equality
+    assert isinstance(feature.attributes['doubleList'], list)
+    dlist = feature.attributes['doubleList']
+    for i in xrange(len(dlist)):
+        if dvalues[i] is None:
+            assert dlist[i] is None
+        else:
+            assert abs(dvalues[i] - dlist[i]) < 10.0**-6
+    assert isinstance(feature.attributes['otherDoubleList'], list)
+    dlist = feature.attributes['otherDoubleList']
+    for i in xrange(len(dlist)):
+        if dvalues[i] is None:
+            assert dlist[i] is None
+        else:
+            assert abs(dvalues[i] - dlist[i]) < 10.0**-8
 
 def test_create_point_feature():
     vt = VectorTile()

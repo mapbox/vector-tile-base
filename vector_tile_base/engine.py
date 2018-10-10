@@ -1,4 +1,5 @@
 import itertools
+import math
 from . import vector_tile_pb2
 
 # Constants
@@ -78,10 +79,82 @@ class Float(float):
     def __init__(self, *args, **kwargs):
         float.__init__(self, *args, **kwargs)
 
-class UInt(int):
+class UInt(long):
     
     def __init__(self, *args, **kwargs):
-        int.__init__(self, *args, **kwargs)
+        long.__init__(self, *args, **kwargs)
+
+def scaling_calculation(precision, min_float, max_float):
+    if min_float >= max_float:
+        raise Exception("Invalid Float Range")
+    if precision > (max_float - min_float):
+        raise Exception("Precision value too large for range")
+    if precision < 0:
+        raise Exception("Precision can not be a negative value")
+    lbits = math.ceil(math.log((max_float - min_float) / precision, 2) + 1.0)
+    #lbytes = int(math.ceil(lbits / 8.0))
+    bPow = int(math.ceil(math.log(max_float - min_float, 2)))
+    #dPow = 8*lbytes - 1
+    dPow = lbits - 1
+    sF = pow(2.0, (dPow - bPow))
+    sR = pow(2.0, (bPow - dPow))
+    return {'sF': sF, 'sR': sR, 'base': min_float }
+
+class FloatList(list):
+
+    def __init__(self, *args, **kwargs):
+        if len(args) < 0:
+            raise Exception("FloatList initialization requires first argument to be Scaling object")
+        if isinstance(args[0], FloatList):
+            self._scaling = args[0]._scaling
+        elif isinstance(args[0], Scaling):
+            self._scaling = args[0]
+            args = tuple(args[1:])
+        else:
+            raise Exception("Unknown object passed to FloatList, first argument must be a Scaling object")
+        if isinstance(args[0], list):
+            new_list = []
+            for v in args[0]:
+                if v is None:
+                    new_list.append(v)
+                elif isinstance(v, float):
+                    new_list.append(self._scaling.encode_value(v))
+                elif isinstance(v, int) or isinstance(v, long):
+                    new_list.append(self._scaling.encode_value(float(v)))
+            new_args = [new_list]
+            new_args.extend(args[1:])
+            args = tuple(new_args)
+        list.__init__(self, *args, **kwargs)
+
+    def append_value(self, value):
+        if value is None:
+            self.append(None)
+        else:
+            self.append(self._scaling.encode_value(value))
+
+    def get_value_at(self, index):
+        if self[index] is None:
+            return self[index]
+        return self._scaling.decode_value(self[index])
+
+    def set_value_at(self, index, value):
+        if value is None:
+            self[index] = None
+        else:
+            self[index] = self._scaling.encode_value(value)
+
+    def get_all_values(self):
+        vals = []
+        for v in self:
+            if v is None:
+                vals.append(None)
+            else:
+                vals.append(self._scaling.decode_value(v))
+        return vals
+
+    @property
+    def index(self):
+        return self._scaling.index
 
 class FeatureAttributes(object):
 
@@ -192,11 +265,11 @@ class Feature(object):
         self.cursor[1] = int(pt[1])
         if self._has_elevation:
             if self._layer._elevation_scaling is None:
-                elevation_list.append(zig_zag_encode(int(pt[2]) - self.cursor[2]))
+                elevation_list.append(int(pt[2]) - self.cursor[2])
                 self.cursor[2] = int(pt[2])
             else:
                 new_pt = self._layer._elevation_scaling.encode_value(int(pt[2]))
-                elevation_list.append(zig_zag_encode(new_pt - self.cursor[2]))
+                elevation_list.append(new_pt - self.cursor[2])
                 self.cursor[2] = new_pt
 
 
@@ -205,7 +278,7 @@ class Feature(object):
         self.cursor[1] = self.cursor[1] + zig_zag_decode(integers[1])
         out = [self.cursor[0], self.cursor[1]]
         if len(integers) > 2:
-            self.cursor[2] = self.cursor[2] + zig_zag_decode(integers[2])
+            self.cursor[2] = self.cursor[2] + integers[2]
             if self._layer._elevation_scaling is None:
                 out.append(self.cursor[2])
             else:
@@ -557,8 +630,9 @@ class CurveFeature(Feature):
 
 class Scaling(object):
 
-    def __init__(self, scaling_object, offset = None, multiplier = None, base = None):
+    def __init__(self, scaling_object, index = None, offset = None, multiplier = None, base = None):
         self._scaling_object = scaling_object
+        self._index = index
         if offset is not None or multiplier is not None or base is not None:
             self._init_from_values(offset, multiplier, base)
         else:
@@ -610,6 +684,10 @@ class Scaling(object):
     @property
     def base(self):
         return self._base
+    
+    @property
+    def index(self):
+        return self._index
 
     def encode_value(self, value):
         return int(round((value - self._base) / self._multiplier)) - self._offset
@@ -654,8 +732,8 @@ class Layer(object):
     
     def _decode_attribute_scalings(self):
         self._attribute_scalings = []
-        for s in self._layer.attribute_scalings:
-            self._attribute_scalings.append(Scaling(s))
+        for i in xrange(len(self._layer.attribute_scalings)):
+            self._attribute_scalings.append(Scaling(self._layer.attribute_scalings[i], index=i))
     
     def _decode_values(self):
         for val in self._layer.values:
@@ -699,12 +777,24 @@ class Layer(object):
             elif feature.type == vector_tile_pb2.Tile.CURVE:
                 self._features.append(CurveFeature(feature, self))
     
-    def add_elevation_scaling(self, offset=0, multiplier=1.0, base=0.0):
-        self._elevation_scaling = Scaling(self._layer.elevation_scaling, offset, multiplier, base)
+    def add_elevation_scaling(self, offset=0, multiplier=1.0, base=0.0, min_value=None, max_value=None, precision=None):
+        if min_value is not None and max_value is not None and precision is not None:
+            out = scaling_calculation(precision, float(min_value), float(max_value))
+            offset = out['offset']
+            base = out['base']
+            multiplier = out['sR']
+        self._elevation_scaling = Scaling(self._layer.elevation_scaling, offset=offset, multiplier=multiplier, base=base)
+        return self._elevation_scaling
     
-    def add_attribute_scaling(self, offset=0, multiplier=1.0, base=0.0):
-        self._attribute_scalings.append(Scaling(self._layer.attribute_scalings.add(), offset, multiplier, base))
-        return len(self._attribute_scalings) - 1
+    def add_attribute_scaling(self, offset=0, multiplier=1.0, base=0.0, min_value=None, max_value=None, precision=None):
+        if min_value is not None and max_value is not None and precision is not None:
+            out = scaling_calculation(precision, float(min_value), float(max_value))
+            offset = 0
+            base = out['base']
+            multiplier = out['sR']
+        index = len(self._attribute_scalings)
+        self._attribute_scalings.append(Scaling(self._layer.attribute_scalings.add(), index=index, offset=offset, multiplier=multiplier, base=base))
+        return self._attribute_scalings[index]
 
     def add_point_feature(self, has_elevation=False):
         self._features.append(PointFeature(self._layer.features.add(), self, has_elevation))
@@ -797,6 +887,8 @@ class Layer(object):
             return self._get_inline_list_attributes(value_itr, param)
         elif val_id == CV_TYPE_MAP:
             return self._get_inline_map_attributes(value_itr, param)
+        elif val_id == CV_TYPE_LIST_DOUBLE:
+            return self._get_inline_float_list(value_itr, param)
         else:
             raise Exception("Unknown value type in inline value")
            
@@ -827,6 +919,27 @@ class Layer(object):
             if limit is not None and count >= limit:
                 break
         return attr_list
+    
+    def _get_inline_float_list(self, value_itr, limit = None):
+        index = next(value_itr)
+        if index < 0 and index >= len(self._attribute_scalings):
+            raise Exception("Invalid attribute scaling index")
+        scaling = self._attribute_scalings[index]
+        attr_list = []
+        if limit == 0:
+            return attr_list
+        count = 0
+        cursor = 0
+        for val in value_itr:
+            if val == 0:
+                attr_list.append(None)
+            else:
+                cursor = cursor + zig_zag_decode(val - 1)
+                attr_list.append(scaling.decode_value(cursor))
+            count = count + 1
+            if limit is not None and count >= limit:
+                break
+        return attr_list
 
     def _add_legacy_attributes(self, attrs):
         tags = []
@@ -845,9 +958,12 @@ class Layer(object):
                 elif isinstance(v,UInt) and v >= 0:
                     val = self._layer.values.add()
                     val.uint_value = v
-                elif isinstance(v,int):
+                elif isinstance(v,int) or isinstance(v,long):
                     val = self._layer.values.add()
-                    val.int_value = v
+                    if v >= 0:
+                        val.int_value = v
+                    else:
+                        val.sint_value = v
                 elif isinstance(v,Float):
                     val = self._layer.values.add()
                     val.float_value = v
@@ -898,7 +1014,7 @@ class Layer(object):
                     return complex_value_integer(CV_TYPE_UINT, len(self._unsigned_integer_values) - 1)
             else:
                 return complex_value_integer(CV_TYPE_INLINE_UINT, v)
-        elif isinstance(v,int):
+        elif isinstance(v,int) or isinstance(v, long):
             if v >= 2**55 or v <= -2**55:
                 zz_v = zig_zag_encode_64(v)
                 try:
@@ -926,6 +1042,10 @@ class Layer(object):
                 self._double_values.append(v)
                 self._layer.double_values.append(v)
                 return complex_value_integer(CV_TYPE_DOUBLE, len(self._double_values) - 1)
+        elif isinstance(v,FloatList):
+            values, length = self._add_inline_float_list(v)
+            values.insert(0, complex_value_integer(CV_TYPE_LIST_DOUBLE, length))
+            return values
         elif isinstance(v,list):
             values, length = self._add_inline_list_attributes(v)
             if not values:
@@ -940,6 +1060,18 @@ class Layer(object):
             return values
         return None
     
+    def _add_inline_float_list(self, attrs):
+        delta_values = [attrs.index]
+        length = len(attrs)
+        cursor = 0
+        for v in attrs:
+            if v is None:
+                delta_values.append(0)
+            else:
+                delta_values.append(zig_zag_encode_64(v - cursor) + 1)
+                cursor = v
+        return delta_values, length
+            
     def _add_inline_list_attributes(self, attrs):
         complex_values = []
         length = len(attrs)
