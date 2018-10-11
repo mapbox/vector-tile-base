@@ -311,11 +311,22 @@ class Feature(object):
     def id(self):
         if self._feature.HasField('id'):
             return self._feature.id;
+        elif self._feature.HasField('string_id'):
+            return self._feature.string_id;
         return None
     
     @id.setter
     def id(self, id_val):
-        self._feature.id = id_val
+        if isinstance(id_val, int):
+            self._feature.id = id_val
+            if self._feature.HasField('string_id'):
+                self._feature.ClearField('string_id')
+        elif self._layer.version >= 3:
+            self._feature.string_id = id_val
+            if self._feature.HasField('id'):
+                self._feature.ClearField('id')
+        else:
+            raise Exception("Can not set string id for features using version 2 or below of the VT specification")
 
     def clear_geometry(self):
         self.has_geometry = False

@@ -43,6 +43,32 @@ def test_layer_features():
         layer.features = [1,2]
     assert len(layer.features) == 0
 
+def test_feature_id():
+    vt = VectorTile()
+    layer = vt.add_layer('test', version=2)
+    feature = layer.add_point_feature()
+    assert feature.id == None
+    feature.id = 12
+    assert feature.id == 12
+    # Fails for a version 2 layer
+    with pytest.raises(Exception):
+        feature.id = "FeatureName"
+    
+    layer = vt.add_layer('test2', version=3)
+    feature = layer.add_point_feature()
+    assert feature.id == None
+    feature.id = 12
+    assert feature.id == 12
+    feature.id = "FeatureName"
+    assert feature.id == "FeatureName"
+
+    data = vt.serialize()
+    vt = VectorTile(data)
+    feature = vt.layers[0].features[0]
+    assert feature.id == 12
+    feature = vt.layers[1].features[0]
+    assert feature.id == "FeatureName"
+
 def test_feature_attributes_version_2():
     vt = VectorTile()
     layer = vt.add_layer('test', version=2)
