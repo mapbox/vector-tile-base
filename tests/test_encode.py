@@ -1,5 +1,5 @@
 import pytest
-from vector_tile_base import VectorTile, CurveFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureAttributes, Float, FloatList
+from vector_tile_base import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureAttributes, Float, FloatList
 
 def test_no_layers():
     vt = VectorTile()
@@ -502,56 +502,58 @@ def test_create_polygon_feature_3d():
     feature.add_ring(polygon[1])
     assert feature.get_polygons() == [polygon, polygon]
 
-def test_create_curve_feature_fail_v2():
+def test_create_spline_feature_fail_v2():
     vt = VectorTile()
     layer = vt.add_layer('test')
     with pytest.raises(Exception):
-        feature = layer.add_curve_feature()
+        feature = layer.add_spline_feature()
 
-def test_create_curve_feature():
+def test_create_spline_feature():
     vt = VectorTile()
     layer = vt.add_layer('test', version=3)
-    feature = layer.add_curve_feature()
-    assert isinstance(feature, CurveFeature)
+    feature = layer.add_spline_feature()
+    assert isinstance(feature, SplineFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
     assert not feature.has_elevation
-    
+    assert feature.degree == 2
+
+    scaling = layer.add_attribute_scaling(precision=10.0**-8, min_value=0.0, max_value=25.0)
     bad_control_points1 = [[8,10]]
+    knot_values = [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
+    knots = FloatList(scaling, knot_values)
     with pytest.raises(Exception):
-        feature.add_control_points(bad_control_points1)
+        feature.add_spline(bad_control_points1, knots)
     bad_control_points2 = [[8,10],[9,11],[9],[12,10]]
     with pytest.raises(IndexError):
-        feature.add_control_points(bad_control_points2)
+        feature.add_spline(bad_control_points2, knots)
     
     control_points = [[8,10],[9,11],[11,9],[12,10]]
-    knots = [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
-    feature.add_control_points(control_points)
-    feature.add_knots(knots)
+    feature.add_spline(control_points, knots)
 
-    assert feature.get_control_points() == control_points
-    assert feature.get_knots() == knots
+    assert feature.get_splines() == [[control_points, knot_values]]
 
-def test_create_curve_feature_3d():
+def test_create_spline_feature_3d():
     vt = VectorTile()
     layer = vt.add_layer('test', version=3)
-    feature = layer.add_curve_feature(has_elevation=True)
-    assert isinstance(feature, CurveFeature)
+    feature = layer.add_spline_feature(has_elevation=True)
+    assert isinstance(feature, SplineFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
     assert feature.has_elevation
+    assert feature.degree == 2
     
+    scaling = layer.add_attribute_scaling(precision=10.0**-8, min_value=0.0, max_value=25.0)
     bad_control_points1 = [[8,10,1]]
+    knot_values = [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
+    knots = FloatList(scaling, knot_values)
     with pytest.raises(Exception):
-        feature.add_control_points(bad_control_points1)
+        feature.add_spline(bad_control_points1, knots)
     bad_control_points2 = [[8,10,1],[9,11,1],[9,1],[12,10,1]]
     with pytest.raises(IndexError):
-        feature.add_control_points(bad_control_points2)
+        feature.add_spline(bad_control_points2, knots)
     
     control_points = [[8,10,1],[9,11,1],[11,9,1],[12,10,1]]
-    knots = [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
-    feature.add_control_points(control_points)
-    feature.add_knots(knots)
+    feature.add_spline(control_points, knots)
 
-    assert feature.get_control_points() == control_points
-    assert feature.get_knots() == knots
+    assert feature.get_splines() == [[control_points, knot_values]]
