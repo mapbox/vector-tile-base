@@ -29,11 +29,21 @@ def test_layer_extent():
 
 def test_layer_zoom_x_y():
     vt = VectorTile()
-    layer = vt.add_layer('test1')
+    layer = vt.add_layer('test0', version=2)
     assert layer.x == None
     assert layer.y == None
     assert layer.zoom == None
-    layer = vt.add_layer('test2', x=0, y=0, zoom=0)
+    with pytest.raises(Exception):
+        layer.set_tile_location(zoom=3, x=4, y=2)
+    layer = vt.add_layer('test1', version=3)
+    assert layer.x == None
+    assert layer.y == None
+    assert layer.zoom == None
+    layer.set_tile_location(zoom=3, x=4, y=2)
+    assert layer.x == 4
+    assert layer.y == 2
+    assert layer.zoom == 3
+    layer = vt.add_layer('test2', version=3, x=0, y=0, zoom=0)
     assert layer.x == 0
     assert layer.y == 0
     assert layer.zoom == 0
@@ -48,21 +58,23 @@ def test_layer_zoom_x_y():
     with pytest.raises(Exception):
         layer.zoom = 4
     with pytest.raises(Exception):
-        vt.add_layer('test3', x=-1, y=0, zoom=0)
+        layer = vt.add_layer('test2', version=2, x=0, y=0, zoom=0)
     with pytest.raises(Exception):
-        vt.add_layer('test4', x=1, y=0, zoom=0)
+        vt.add_layer('test3', version=3, x=-1, y=0, zoom=0)
     with pytest.raises(Exception):
-        vt.add_layer('test5', x=2, y=0, zoom=1)
+        vt.add_layer('test4', version=3, x=1, y=0, zoom=0)
     with pytest.raises(Exception):
-        vt.add_layer('test3', x=0, y=-1, zoom=0)
+        vt.add_layer('test5', version=3, x=2, y=0, zoom=1)
     with pytest.raises(Exception):
-        vt.add_layer('test4', x=0, y=1, zoom=0)
+        vt.add_layer('test3', version=3, x=0, y=-1, zoom=0)
     with pytest.raises(Exception):
-        vt.add_layer('test5', x=0, y=2, zoom=1)
+        vt.add_layer('test4', version=3, x=0, y=1, zoom=0)
     with pytest.raises(Exception):
-        vt.add_layer('test3', x=0, y=0, zoom=-1)
+        vt.add_layer('test5', version=3, x=0, y=2, zoom=1)
     with pytest.raises(Exception):
-        vt.add_layer('test3', x=0, y=0, zoom=51)
+        vt.add_layer('test3', version=3, x=0, y=0, zoom=-1)
+    with pytest.raises(Exception):
+        vt.add_layer('test3', version=3, x=0, y=0, zoom=51)
 
 def test_layer_name():
     vt = VectorTile()
@@ -109,6 +121,7 @@ def test_feature_id():
 def test_feature_attributes_version_2():
     vt = VectorTile()
     layer = vt.add_layer('test', version=2)
+    assert layer.version == 2
     feature = layer.add_point_feature()
     assert isinstance(feature, PointFeature)
     assert len(layer.features) == 1
@@ -145,6 +158,10 @@ def test_feature_attributes_version_2():
     assert feature.attributes != prop_dict
     assert feature.attributes == prop_dict2
     
+    # Show that geometric attributes don't work with version 2
+    with pytest.raises(Exception):
+        feature.geometric_attributes = {'hmm': [1,2,3,4,5]}
+    
     # Now serialize the tile
     data = vt.serialize()
     # Reload as new tile to check that cursor moves to proper position for another add point
@@ -153,11 +170,82 @@ def test_feature_attributes_version_2():
     assert feature.attributes['go'] == prop_dict2['go']
     assert feature.attributes['double'] == prop_dict2['double']
     # note change is expected due to float encoding!
-    assert feature.attributes['float'] == 23432.322265625 
+    assert feature.attributes['float'] == 23432.322265625
+    # Show that geometric attributes don't work with version 2
+    assert feature.geometric_attributes == {}
+
+def test_feature_attributes_version_3_legacy():
+    vt = VectorTile()
+    layer = vt.add_layer('test', version=3, legacy_attributes=True)
+    assert layer.version == 3
+    feature = layer.add_point_feature()
+    assert isinstance(feature, PointFeature)
+    assert len(layer.features) == 1
+    assert feature == layer.features[0]
+    prop = feature.attributes
+    assert isinstance(prop, FeatureAttributes)
+    assert feature.attributes == {}
+    assert prop == {}
+    prop['fun'] = 'stuff'
+    assert 'fun' in prop
+    assert prop['fun'] == 'stuff'
+    assert feature.attributes['fun'] == 'stuff'
+    assert feature.attributes == {'fun':'stuff'}
+    # Can set by external dictionary
+    prop_dict = { 'number': 1, 'bool': True, 'string': 'foo', 'float': 4.1 }
+    feature.attributes = prop_dict
+    assert feature.attributes == prop_dict
+    # Key error on not existant property
+    with pytest.raises(KeyError):
+        foo = feature.attributes['doesnotexist']
+    # Type errors on invalid key types
+    with pytest.raises(TypeError):
+        feature.attributes[1.234] = True
+    with pytest.raises(TypeError):
+        feature.attributes[1] = True
+    with pytest.raises(TypeError):
+        foo = feature.attributes[1.234]
+    with pytest.raises(TypeError):
+        foo = feature.attributes[1]
+    # During setting invalid attributes with bad keys or value types will just be dropped
+    prop_dict = {
+        'foo': [1,2,3],
+        'fee': [{'a':'b'}, {'a':['c','d']}],
+        1.2341: 'stuff',
+        1: 'fish',
+        'go': False,
+        'double': 2.32432,
+        'float': Float(23432.3222)
+    }
+    prop_dict2 = {
+        'go': False,
+        'double': 2.32432,
+        'float': 23432.3222
+    }
+    feature.attributes = prop_dict
+    assert feature.attributes != prop_dict
+    assert feature.attributes == prop_dict2
+    
+    # Show that geometric attributes don't work with version 3 legacy attributes
+    with pytest.raises(Exception):
+        feature.geometric_attributes = {'hmm': [1,2,3,4,5]}
+    
+    # Now serialize the tile
+    data = vt.serialize()
+    # Reload as new tile to check that cursor moves to proper position for another add point
+    vt = VectorTile(data)
+    feature = vt.layers[0].features[0]
+    assert feature.attributes['go'] == prop_dict2['go']
+    assert feature.attributes['double'] == prop_dict2['double']
+    # note change is expected due to float encoding!
+    assert feature.attributes['float'] == 23432.322265625
+    # Show that geometric attributes don't work with version 3 with legacy attributes
+    assert feature.geometric_attributes == {}
 
 def test_feature_attributes_version_3():
     vt = VectorTile()
     layer = vt.add_layer('test', version=3)
+    assert layer.version == 3
     feature = layer.add_point_feature()
     assert isinstance(feature, PointFeature)
     assert len(layer.features) == 1
@@ -226,9 +314,26 @@ def test_feature_attributes_version_3():
         'doubleList': flist1,
         'otherDoubleList': flist2
     }
+    geometric_dict = {
+        'now': [1,2,4,5,234],
+        'stuff': [{'x':12}, None, None, None, {'y':13}],
+        'dlist': flist2,
+        'not': None,
+        'this': 8,
+        'or': True,
+        'that': { 'lost':'values'}
+    }
+    geometric_dict2 = {
+        'now': [1,2,4,5,234],
+        'stuff': [{'x':12}, None, None, None, {'y':13}],
+        'dlist': flist2
+    }
     feature.attributes = prop_dict
     assert feature.attributes != prop_dict
     assert feature.attributes == prop_dict2
+
+    feature.geometric_attributes = geometric_dict
+    assert feature.geometric_attributes == geometric_dict2
     
     # Now serialize the tile
     data = vt.serialize()
@@ -251,6 +356,15 @@ def test_feature_attributes_version_3():
             assert abs(dvalues[i] - dlist[i]) < 10.0**-6
     assert isinstance(feature.attributes['otherDoubleList'], list)
     dlist = feature.attributes['otherDoubleList']
+    for i in range(len(dlist)):
+        if dvalues[i] is None:
+            assert dlist[i] is None
+        else:
+            assert abs(dvalues[i] - dlist[i]) < 10.0**-8
+
+    assert feature.geometric_attributes['now'] == geometric_dict2['now']
+    assert feature.geometric_attributes['stuff'] == geometric_dict2['stuff']
+    dlist = feature.geometric_attributes['dlist']
     for i in range(len(dlist)):
         if dvalues[i] is None:
             assert dlist[i] is None
