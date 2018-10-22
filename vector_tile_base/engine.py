@@ -926,12 +926,12 @@ class Layer(object):
     def set_tile_location(self, zoom, x, y):
         if zoom < 0 or zoom > 50:
             raise Exception("Please use a zoom level between 0 and 50")
-        if x < 0 or x > 2**zoom:
+        if x < 0 or x > (2**zoom - 1):
             raise Exception("Tile x value outside of possible values given zoom level")
-        if y < 0 or y > 2**zoom:
+        if y < 0 or y > (2**zoom - 1):
             raise Exception("Tile y value outside of possible values given zoom level")
         self._layer.tile_x = x
-        self._layer.tile_y = x
+        self._layer.tile_y = y
         self._layer.tile_zoom = zoom
 
     def get_attributes(self, int_list):
@@ -1233,8 +1233,8 @@ class VectorTile(object):
     def serialize(self):
         return self._tile.SerializeToString()
 
-    def add_layer(self, name, version = None):
-        self._layers.append(Layer(self._tile.layers.add(), name, version))
+    def add_layer(self, name, version = None, x = None, y = None, zoom = None):
+        self._layers.append(Layer(self._tile.layers.add(), name, version=version, x=x, y=y, zoom=zoom))
         return self._layers[-1]
 
     @property

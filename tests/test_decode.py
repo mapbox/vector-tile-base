@@ -16,6 +16,9 @@ def test_decode_vector_tile():
     assert layer.name == 'points'
     assert layer.extent == 4096
     assert layer.version == 2
+    assert layer.zoom == 4
+    assert layer.x == 3
+    assert layer.y == 2
     assert len(layer.features) == 4
     # Test layer features
     for feature in layer.features:
@@ -55,6 +58,9 @@ def test_decode_vector_tile():
     assert layer.name == 'lines'
     assert layer.extent == 4096
     assert layer.version == 2
+    assert layer.zoom == None
+    assert layer.x == None
+    assert layer.y == None
     assert len(layer.features) == 1
     # Test layer features
     feature = layer.features[0]
@@ -271,6 +277,7 @@ def create_decode_test_fixture():
     vt = VectorTile()
     # layer 0
     layer = vt.add_layer('points', version=2)
+    layer.set_tile_location(zoom=4, x=3, y=2)
     feature = layer.add_point_feature(has_elevation=False)
     feature.id = 2
     feature.add_points([20,20])

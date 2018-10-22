@@ -27,6 +27,43 @@ def test_layer_extent():
     layer.extent = 8000
     assert layer.extent == 8000
 
+def test_layer_zoom_x_y():
+    vt = VectorTile()
+    layer = vt.add_layer('test1')
+    assert layer.x == None
+    assert layer.y == None
+    assert layer.zoom == None
+    layer = vt.add_layer('test2', x=0, y=0, zoom=0)
+    assert layer.x == 0
+    assert layer.y == 0
+    assert layer.zoom == 0
+    layer.set_tile_location(zoom=3, x=4, y=2)
+    assert layer.x == 4
+    assert layer.y == 2
+    assert layer.zoom == 3
+    with pytest.raises(Exception):
+        layer.x = 5
+    with pytest.raises(Exception):
+        layer.y = 5
+    with pytest.raises(Exception):
+        layer.zoom = 4
+    with pytest.raises(Exception):
+        vt.add_layer('test3', x=-1, y=0, zoom=0)
+    with pytest.raises(Exception):
+        vt.add_layer('test4', x=1, y=0, zoom=0)
+    with pytest.raises(Exception):
+        vt.add_layer('test5', x=2, y=0, zoom=1)
+    with pytest.raises(Exception):
+        vt.add_layer('test3', x=0, y=-1, zoom=0)
+    with pytest.raises(Exception):
+        vt.add_layer('test4', x=0, y=1, zoom=0)
+    with pytest.raises(Exception):
+        vt.add_layer('test5', x=0, y=2, zoom=1)
+    with pytest.raises(Exception):
+        vt.add_layer('test3', x=0, y=0, zoom=-1)
+    with pytest.raises(Exception):
+        vt.add_layer('test3', x=0, y=0, zoom=51)
+
 def test_layer_name():
     vt = VectorTile()
     layer = vt.add_layer('test')
