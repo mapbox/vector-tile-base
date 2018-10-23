@@ -1,4 +1,4 @@
-from vector_tile_base import VectorTile, CurveFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureAttributes
+from vector_tile_base import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureAttributes, FloatList
 
 def test_decode_vector_tile():
     # Uncomment next line to recreate test data
@@ -55,6 +55,9 @@ def test_decode_vector_tile():
     assert layer.name == 'lines'
     assert layer.extent == 4096
     assert layer.version == 2
+    assert layer.zoom == None
+    assert layer.x == None
+    assert layer.y == None
     assert len(layer.features) == 1
     # Test layer features
     feature = layer.features[0]
@@ -108,30 +111,35 @@ def test_decode_vector_tile():
     # Test fourth layer
     layer = vt.layers[3]
     assert isinstance(layer, Layer)
-    assert layer.name == 'curves'
+    assert layer.name == 'splines'
     assert layer.extent == 4096
     assert layer.version == 3
     assert len(layer.features) == 1
     # Test layer features
     feature = layer.features[0]
-    assert isinstance(feature, CurveFeature)
-    assert feature.type == 'curve'
+    assert isinstance(feature, SplineFeature)
+    assert feature.type == 'spline'
     assert feature.id == expected_id
     assert not feature.has_elevation
+    assert feature.degree == 3
     expected_id += 1
-    control_points = feature.get_control_points()
+    splines = feature.get_splines()
+    assert isinstance(splines, list)
+    assert len(splines) == 1
+    assert len(splines[0]) == 2
+    control_points = splines[0][0]
     assert isinstance(control_points, list)
     assert len(control_points) == 4
     assert control_points == [[8,10],[9,11],[11,9],[12,10]]
-    knots = feature.get_knots()
-    assert [control_points, knots] == feature.get_geometry()
-    assert len(knots) == 14
-    assert knots == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.875, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0]
+    knots = splines[0][1]
+    assert [[control_points, knots]] == feature.get_geometry()
+    assert len(knots) == 8
+    assert knots == [0.0, 2.0, 3.0, 4.0, 5.875, 6.0, 7.0, 8.0]
     props = feature.attributes
     assert isinstance(props, FeatureAttributes)
     assert len(props) == 1
     assert props['natural']
-    assert props['natural'] == 'curve'
+    assert props['natural'] == 'spline'
     
     # Test fifth layer
     expected_id += 1
@@ -140,6 +148,9 @@ def test_decode_vector_tile():
     assert layer.name == 'points_3d'
     assert layer.extent == 4096
     assert layer.version == 3
+    assert layer.zoom == 4
+    assert layer.x == 3
+    assert layer.y == 2
     assert len(layer.features) == 4
     # Test layer features
     point_z = 10
@@ -232,29 +243,35 @@ def test_decode_vector_tile():
     # Test eighth layer
     layer = vt.layers[7]
     assert isinstance(layer, Layer)
-    assert layer.name == 'curves_3d'
+    assert layer.name == 'splines_3d'
     assert layer.extent == 4096
     assert layer.version == 3
     assert len(layer.features) == 1
     # Test layer features
     feature = layer.features[0]
-    assert isinstance(feature, CurveFeature)
-    assert feature.type == 'curve'
+    assert isinstance(feature, SplineFeature)
+    assert feature.type == 'spline'
     assert feature.id == expected_id
     assert feature.has_elevation
+    assert feature.degree == 3
     expected_id += 1
-    control_points = feature.get_control_points()
+    splines = feature.get_splines()
+    assert isinstance(splines, list)
+    assert len(splines) == 1
+    assert len(splines[0]) == 2
+    control_points = splines[0][0]
     assert isinstance(control_points, list)
     assert len(control_points) == 4
     assert control_points == [[8,10,10],[9,11,11],[11,9,12],[12,10,13]]
-    knots = feature.get_knots()
-    assert len(knots) == 14
-    assert knots == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.875, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0]
+    knots = splines[0][1]
+    assert [[control_points, knots]] == feature.get_geometry()
+    assert len(knots) == 8
+    assert knots == [0.0, 2.0, 3.0, 4.0, 5.875, 6.0, 7.0, 8.0]
     props = feature.attributes
     assert isinstance(props, FeatureAttributes)
     assert len(props) == 1
     assert props['natural']
-    assert props['natural'] == 'curve'
+    assert props['natural'] == 'spline'
 
 def create_decode_test_fixture():
     vt = VectorTile()
@@ -291,14 +308,16 @@ def create_decode_test_fixture():
     feature.add_ring([[3,3],[3,5],[5,5],[3,3]])
     feature.attributes = { 'natural': 'wood' }
     #layer 3
-    layer = vt.add_layer('curves', version=3)
-    feature = layer.add_curve_feature(has_elevation=False)
+    layer = vt.add_layer('splines', version=3)
+    feature = layer.add_spline_feature(has_elevation=False, degree=3)
     feature.id = 8
-    feature.add_control_points([[8,10],[9,11],[11,9],[12,10]])
-    feature.add_knots([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.875, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0])
-    feature.attributes = { 'natural': 'curve' }
+    scaling = layer.add_attribute_scaling(precision=10.0**-8, min_value=0.0, max_value=25.0)
+    knots = FloatList(scaling, [0.0, 2.0, 3.0, 4.0, 5.875, 6.0, 7.0, 8.0])
+    feature.add_spline([[8,10],[9,11],[11,9],[12,10]], knots)
+    feature.attributes = { 'natural': 'spline' }
     # layer 4
     layer = vt.add_layer('points_3d', version=3)
+    layer.set_tile_location(zoom=4, x=3, y=2)
     feature = layer.add_point_feature(has_elevation=True)
     feature.id = 10
     feature.add_points([20,20,10])
@@ -330,12 +349,13 @@ def create_decode_test_fixture():
     feature.add_ring([[3,3,20],[3,5,40],[5,5,30],[3,3,20]])
     feature.attributes = { 'natural': 'wood' }
     #layer 7
-    layer = vt.add_layer('curves_3d', version=3)
-    feature = layer.add_curve_feature(has_elevation=True)
+    layer = vt.add_layer('splines_3d', version=3)
+    feature = layer.add_spline_feature(has_elevation=True, degree=3)
     feature.id = 16
-    feature.add_control_points([[8,10,10],[9,11,11],[11,9,12],[12,10,13]])
-    feature.add_knots([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.875, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0])
-    feature.attributes = { 'natural': 'curve' }
+    scaling = layer.add_attribute_scaling(precision=10.0**-8, min_value=0.0, max_value=25.0)
+    knots = FloatList(scaling, [0.0, 2.0, 3.0, 4.0, 5.875, 6.0, 7.0, 8.0])
+    feature.add_spline([[8,10,10],[9,11,11],[11,9,12],[12,10,13]], knots)
+    feature.attributes = { 'natural': 'spline' }
     f = open('tests/test.mvt', 'wb')
     f.write(vt.serialize())
     f.close()

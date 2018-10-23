@@ -1,5 +1,5 @@
 import pytest
-from vector_tile_base import VectorTile, CurveFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureAttributes, Float, FloatList
+from vector_tile_base import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureAttributes, Float, FloatList
 
 def test_no_layers():
     vt = VectorTile()
@@ -26,6 +26,55 @@ def test_layer_extent():
     assert layer.extent == 4096
     layer.extent = 8000
     assert layer.extent == 8000
+
+def test_layer_zoom_x_y():
+    vt = VectorTile()
+    layer = vt.add_layer('test0', version=2)
+    assert layer.x == None
+    assert layer.y == None
+    assert layer.zoom == None
+    with pytest.raises(Exception):
+        layer.set_tile_location(zoom=3, x=4, y=2)
+    layer = vt.add_layer('test1', version=3)
+    assert layer.x == None
+    assert layer.y == None
+    assert layer.zoom == None
+    layer.set_tile_location(zoom=3, x=4, y=2)
+    assert layer.x == 4
+    assert layer.y == 2
+    assert layer.zoom == 3
+    layer = vt.add_layer('test2', version=3, x=0, y=0, zoom=0)
+    assert layer.x == 0
+    assert layer.y == 0
+    assert layer.zoom == 0
+    layer.set_tile_location(zoom=3, x=4, y=2)
+    assert layer.x == 4
+    assert layer.y == 2
+    assert layer.zoom == 3
+    with pytest.raises(Exception):
+        layer.x = 5
+    with pytest.raises(Exception):
+        layer.y = 5
+    with pytest.raises(Exception):
+        layer.zoom = 4
+    with pytest.raises(Exception):
+        layer = vt.add_layer('test2', version=2, x=0, y=0, zoom=0)
+    with pytest.raises(Exception):
+        vt.add_layer('test3', version=3, x=-1, y=0, zoom=0)
+    with pytest.raises(Exception):
+        vt.add_layer('test4', version=3, x=1, y=0, zoom=0)
+    with pytest.raises(Exception):
+        vt.add_layer('test5', version=3, x=2, y=0, zoom=1)
+    with pytest.raises(Exception):
+        vt.add_layer('test3', version=3, x=0, y=-1, zoom=0)
+    with pytest.raises(Exception):
+        vt.add_layer('test4', version=3, x=0, y=1, zoom=0)
+    with pytest.raises(Exception):
+        vt.add_layer('test5', version=3, x=0, y=2, zoom=1)
+    with pytest.raises(Exception):
+        vt.add_layer('test3', version=3, x=0, y=0, zoom=-1)
+    with pytest.raises(Exception):
+        vt.add_layer('test3', version=3, x=0, y=0, zoom=51)
 
 def test_layer_name():
     vt = VectorTile()
@@ -72,6 +121,7 @@ def test_feature_id():
 def test_feature_attributes_version_2():
     vt = VectorTile()
     layer = vt.add_layer('test', version=2)
+    assert layer.version == 2
     feature = layer.add_point_feature()
     assert isinstance(feature, PointFeature)
     assert len(layer.features) == 1
@@ -108,6 +158,10 @@ def test_feature_attributes_version_2():
     assert feature.attributes != prop_dict
     assert feature.attributes == prop_dict2
     
+    # Show that geometric attributes don't work with version 2
+    with pytest.raises(Exception):
+        feature.geometric_attributes = {'hmm': [1,2,3,4,5]}
+    
     # Now serialize the tile
     data = vt.serialize()
     # Reload as new tile to check that cursor moves to proper position for another add point
@@ -116,11 +170,82 @@ def test_feature_attributes_version_2():
     assert feature.attributes['go'] == prop_dict2['go']
     assert feature.attributes['double'] == prop_dict2['double']
     # note change is expected due to float encoding!
-    assert feature.attributes['float'] == 23432.322265625 
+    assert feature.attributes['float'] == 23432.322265625
+    # Show that geometric attributes don't work with version 2
+    assert feature.geometric_attributes == {}
+
+def test_feature_attributes_version_3_legacy():
+    vt = VectorTile()
+    layer = vt.add_layer('test', version=3, legacy_attributes=True)
+    assert layer.version == 3
+    feature = layer.add_point_feature()
+    assert isinstance(feature, PointFeature)
+    assert len(layer.features) == 1
+    assert feature == layer.features[0]
+    prop = feature.attributes
+    assert isinstance(prop, FeatureAttributes)
+    assert feature.attributes == {}
+    assert prop == {}
+    prop['fun'] = 'stuff'
+    assert 'fun' in prop
+    assert prop['fun'] == 'stuff'
+    assert feature.attributes['fun'] == 'stuff'
+    assert feature.attributes == {'fun':'stuff'}
+    # Can set by external dictionary
+    prop_dict = { 'number': 1, 'bool': True, 'string': 'foo', 'float': 4.1 }
+    feature.attributes = prop_dict
+    assert feature.attributes == prop_dict
+    # Key error on not existant property
+    with pytest.raises(KeyError):
+        foo = feature.attributes['doesnotexist']
+    # Type errors on invalid key types
+    with pytest.raises(TypeError):
+        feature.attributes[1.234] = True
+    with pytest.raises(TypeError):
+        feature.attributes[1] = True
+    with pytest.raises(TypeError):
+        foo = feature.attributes[1.234]
+    with pytest.raises(TypeError):
+        foo = feature.attributes[1]
+    # During setting invalid attributes with bad keys or value types will just be dropped
+    prop_dict = {
+        'foo': [1,2,3],
+        'fee': [{'a':'b'}, {'a':['c','d']}],
+        1.2341: 'stuff',
+        1: 'fish',
+        'go': False,
+        'double': 2.32432,
+        'float': Float(23432.3222)
+    }
+    prop_dict2 = {
+        'go': False,
+        'double': 2.32432,
+        'float': 23432.3222
+    }
+    feature.attributes = prop_dict
+    assert feature.attributes != prop_dict
+    assert feature.attributes == prop_dict2
+    
+    # Show that geometric attributes don't work with version 3 legacy attributes
+    with pytest.raises(Exception):
+        feature.geometric_attributes = {'hmm': [1,2,3,4,5]}
+    
+    # Now serialize the tile
+    data = vt.serialize()
+    # Reload as new tile to check that cursor moves to proper position for another add point
+    vt = VectorTile(data)
+    feature = vt.layers[0].features[0]
+    assert feature.attributes['go'] == prop_dict2['go']
+    assert feature.attributes['double'] == prop_dict2['double']
+    # note change is expected due to float encoding!
+    assert feature.attributes['float'] == 23432.322265625
+    # Show that geometric attributes don't work with version 3 with legacy attributes
+    assert feature.geometric_attributes == {}
 
 def test_feature_attributes_version_3():
     vt = VectorTile()
     layer = vt.add_layer('test', version=3)
+    assert layer.version == 3
     feature = layer.add_point_feature()
     assert isinstance(feature, PointFeature)
     assert len(layer.features) == 1
@@ -189,9 +314,26 @@ def test_feature_attributes_version_3():
         'doubleList': flist1,
         'otherDoubleList': flist2
     }
+    geometric_dict = {
+        'now': [1,2,4,5,234],
+        'stuff': [{'x':12}, None, None, None, {'y':13}],
+        'dlist': flist2,
+        'not': None,
+        'this': 8,
+        'or': True,
+        'that': { 'lost':'values'}
+    }
+    geometric_dict2 = {
+        'now': [1,2,4,5,234],
+        'stuff': [{'x':12}, None, None, None, {'y':13}],
+        'dlist': flist2
+    }
     feature.attributes = prop_dict
     assert feature.attributes != prop_dict
     assert feature.attributes == prop_dict2
+
+    feature.geometric_attributes = geometric_dict
+    assert feature.geometric_attributes == geometric_dict2
     
     # Now serialize the tile
     data = vt.serialize()
@@ -214,6 +356,15 @@ def test_feature_attributes_version_3():
             assert abs(dvalues[i] - dlist[i]) < 10.0**-6
     assert isinstance(feature.attributes['otherDoubleList'], list)
     dlist = feature.attributes['otherDoubleList']
+    for i in range(len(dlist)):
+        if dvalues[i] is None:
+            assert dlist[i] is None
+        else:
+            assert abs(dvalues[i] - dlist[i]) < 10.0**-8
+
+    assert feature.geometric_attributes['now'] == geometric_dict2['now']
+    assert feature.geometric_attributes['stuff'] == geometric_dict2['stuff']
+    dlist = feature.geometric_attributes['dlist']
     for i in range(len(dlist)):
         if dvalues[i] is None:
             assert dlist[i] is None
@@ -502,56 +653,58 @@ def test_create_polygon_feature_3d():
     feature.add_ring(polygon[1])
     assert feature.get_polygons() == [polygon, polygon]
 
-def test_create_curve_feature_fail_v2():
+def test_create_spline_feature_fail_v2():
     vt = VectorTile()
     layer = vt.add_layer('test')
     with pytest.raises(Exception):
-        feature = layer.add_curve_feature()
+        feature = layer.add_spline_feature()
 
-def test_create_curve_feature():
+def test_create_spline_feature():
     vt = VectorTile()
     layer = vt.add_layer('test', version=3)
-    feature = layer.add_curve_feature()
-    assert isinstance(feature, CurveFeature)
+    feature = layer.add_spline_feature()
+    assert isinstance(feature, SplineFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
     assert not feature.has_elevation
-    
+    assert feature.degree == 2
+
+    scaling = layer.add_attribute_scaling(precision=10.0**-8, min_value=0.0, max_value=25.0)
     bad_control_points1 = [[8,10]]
+    knot_values = [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
+    knots = FloatList(scaling, knot_values)
     with pytest.raises(Exception):
-        feature.add_control_points(bad_control_points1)
+        feature.add_spline(bad_control_points1, knots)
     bad_control_points2 = [[8,10],[9,11],[9],[12,10]]
     with pytest.raises(IndexError):
-        feature.add_control_points(bad_control_points2)
+        feature.add_spline(bad_control_points2, knots)
     
     control_points = [[8,10],[9,11],[11,9],[12,10]]
-    knots = [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
-    feature.add_control_points(control_points)
-    feature.add_knots(knots)
+    feature.add_spline(control_points, knots)
 
-    assert feature.get_control_points() == control_points
-    assert feature.get_knots() == knots
+    assert feature.get_splines() == [[control_points, knot_values]]
 
-def test_create_curve_feature_3d():
+def test_create_spline_feature_3d():
     vt = VectorTile()
     layer = vt.add_layer('test', version=3)
-    feature = layer.add_curve_feature(has_elevation=True)
-    assert isinstance(feature, CurveFeature)
+    feature = layer.add_spline_feature(has_elevation=True)
+    assert isinstance(feature, SplineFeature)
     assert len(layer.features) == 1
     assert feature == layer.features[0]
     assert feature.has_elevation
+    assert feature.degree == 2
     
+    scaling = layer.add_attribute_scaling(precision=10.0**-8, min_value=0.0, max_value=25.0)
     bad_control_points1 = [[8,10,1]]
+    knot_values = [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
+    knots = FloatList(scaling, knot_values)
     with pytest.raises(Exception):
-        feature.add_control_points(bad_control_points1)
+        feature.add_spline(bad_control_points1, knots)
     bad_control_points2 = [[8,10,1],[9,11,1],[9,1],[12,10,1]]
     with pytest.raises(IndexError):
-        feature.add_control_points(bad_control_points2)
+        feature.add_spline(bad_control_points2, knots)
     
     control_points = [[8,10,1],[9,11,1],[11,9,1],[12,10,1]]
-    knots = [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
-    feature.add_control_points(control_points)
-    feature.add_knots(knots)
+    feature.add_spline(control_points, knots)
 
-    assert feature.get_control_points() == control_points
-    assert feature.get_knots() == knots
+    assert feature.get_splines() == [[control_points, knot_values]]

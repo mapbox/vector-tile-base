@@ -22,6 +22,8 @@ CV_NULL = 0
 CV_BOOL_FALSE = 1
 CV_BOOL_TRUE = 2
 
+DEFAULT_SPLINE_DEGREE = 2
+
 # Python3 Compatability
 try:
     unicode
@@ -129,7 +131,7 @@ class FloatList(list):
             new_args = [new_list]
             new_args.extend(args[1:])
             args = tuple(new_args)
-        list.__init__(*args, **kwargs)
+        super(FloatList, self).__init__(*args, **kwargs)
 
     def append_value(self, value):
         if value is None:
@@ -163,15 +165,19 @@ class FloatList(list):
 
 class FeatureAttributes(object):
 
-    def __init__(self, feature, layer):
+    def __init__(self, feature, layer, is_geometric=False):
         self._feature = feature
         self._layer = layer
         self._attr = {}
         self._attr_current = False
+        self._is_geometric = is_geometric
 
     def _encode_attr(self):
         if self._layer._inline_attributes:
-            self._feature.attributes[:] = self._layer.add_attributes(self._attr)
+            if self._is_geometric:
+                self._feature.geometric_attributes[:] = self._layer.add_attributes(self._attr, True)
+            else:
+                self._feature.attributes[:] = self._layer.add_attributes(self._attr, False)
         else:
             self._feature.tags[:] = self._layer.add_attributes(self._attr)
         self._attr_current = True
@@ -179,10 +185,16 @@ class FeatureAttributes(object):
     def _decode_attr(self):
         if not self._attr_current:
             if self._layer._inline_attributes:
-                if len(self._feature.attributes) == 0:
-                    self._attr = {}
+                if self._is_geometric:
+                    if len(self._feature.geometric_attributes) == 0:
+                        self._attr = {}
+                    else:
+                        self._attr = self._layer.get_attributes(self._feature.geometric_attributes, True)
                 else:
-                    self._attr = self._layer.get_attributes(self._feature.attributes)
+                    if len(self._feature.attributes) == 0:
+                        self._attr = {}
+                    else:
+                        self._attr = self._layer.get_attributes(self._feature.attributes)
             else:
                 if len(self._feature.tags) == 0:
                     self._attr = {}
@@ -253,7 +265,11 @@ class Feature(object):
             self._has_elevation = has_elevation
         
         self._reset_cursor()
-        self._attributes = FeatureAttributes(feature, layer)
+        self._attributes = FeatureAttributes(feature, layer, is_geometric=False)
+        if self._layer._inline_attributes:
+            self._geometric_attributes = FeatureAttributes(feature, layer, is_geometric=True)
+        else:
+            self._geometric_attributes = {}
 
     def _reset_cursor(self):
         self.cursor = []
@@ -306,6 +322,16 @@ class Feature(object):
     @attributes.setter
     def attributes(self, attrs):
         self._attributes.set(attrs)
+    
+    @property
+    def geometric_attributes(self):
+        return self._geometric_attributes
+
+    @geometric_attributes.setter
+    def geometric_attributes(self, attrs):
+        if not self._layer._inline_attributes:
+            raise Exception("Can not set geometric attributes for none inline attributes configured layer.")
+        self._geometric_attributes.set(attrs)
 
     @property
     def id(self):
@@ -575,18 +601,30 @@ class PolygonFeature(Feature):
     def get_geometry(self, no_elevation=False):
         return self.get_polygons(no_elevation)       
 
-class CurveFeature(Feature):
+class SplineFeature(Feature):
     
-    def __init__(self, feature, layer, has_elevation=None):
-        super(CurveFeature, self).__init__(feature, layer, has_elevation)
-        if feature.type is not vector_tile_pb2.Tile.CURVE:
-            feature.type = vector_tile_pb2.Tile.CURVE
-        self.type = 'curve'
+    def __init__(self, feature, layer, has_elevation=None, degree=None):
+        super(SplineFeature, self).__init__(feature, layer, has_elevation)
+        if feature.type is not vector_tile_pb2.Tile.SPLINE:
+            feature.type = vector_tile_pb2.Tile.SPLINE
+        self.type = 'spline'
+        if self._feature.HasField('spline_degree'):
+            self._degree = self._feature.spline_degree
+        elif degree is None or degree == DEFAULT_SPLINE_DEGREE:
+            self._degree = DEFAULT_SPLINE_DEGREE
+        else:
+            self._degree = degree
+            self._feature.spline_degree = degree
             
-    def add_control_points(self, control_points):
+    def add_spline(self, control_points, knots):
         num_commands = len(control_points)
         if num_commands < 2:
             raise Exception("Error adding control points, less then 2 points provided")
+        if not isinstance(knots, FloatList):
+            raise Exception("Knot values must be provided in the form of a FloatList")
+        num_knots = len(knots)
+        if num_knots != (num_commands + self._degree + 1):
+            raise Exception("The length of knots must be equal to the length of control points + degree + 1") 
         cmd_list = []
         if self._has_elevation:
             elevation_list = []
@@ -604,16 +642,25 @@ class CurveFeature(Feature):
         self._feature.geometry.extend(cmd_list)
         if elevation_list:
             self._feature.elevation.extend(elevation_list)
+        values, length = self._layer._add_inline_float_list(knots)
+        values.insert(0, complex_value_integer(CV_TYPE_LIST_DOUBLE, length))
+        self._feature.spline_knots.extend(values)
+
+    @property
+    def degree(self):
+        return self._degree 
     
-    def get_control_points(self, no_elevation=False):
-        control_points = []
+    def get_splines(self, no_elevation=False):
+        splines = []
         self._reset_cursor()
         geom = iter(self._feature.geometry)
+        knots_itr = iter(self._feature.spline_knots)
         if self._has_elevation and not no_elevation:
             elevation = iter(self._feature.elevation)
         try:
             current_command = next(geom)
-            if next_command_move_to(current_command):
+            while next_command_move_to(current_command):
+                control_points = []
                 if get_command_count(current_command) != 1:
                     raise Exception("Command move_to has command count not equal to 1 in a line string")
                 if self._has_elevation and not no_elevation:
@@ -628,21 +675,31 @@ class CurveFeature(Feature):
                         else:
                             control_points.append(self._decode_point([next(geom), next(geom)]))
                     current_command = next(geom)
+                if len(control_points) > 1:
+                    splines.append([control_points])
+        except StopIteration:
+            if len(control_points) > 1:
+                splines.append([control_points])
+            pass
+
+        try:
+            for i in range(len(splines)):
+                complex_value = next(knots_itr)
+                val_id = get_inline_value_id(complex_value)
+                param = get_inline_value_parameter(complex_value)
+                if val_id == CV_TYPE_LIST_DOUBLE:
+                    knots = self._layer._get_inline_float_list(knots_itr, param)
+                num_cp = len(splines[i][0])
+                num_knots = len(knots)
+                if num_knots == (num_cp + self._degree + 1):
+                    splines[i].append(knots)
         except StopIteration:
             pass
         self._cursor_at_end = True
-        if len(control_points) < 1:
-            return []
-        return control_points
-
-    def add_knots(self, knots):
-        self._feature.knots[:] = knots
-
-    def get_knots(self):
-        return self._feature.knots
+        return splines
 
     def get_geometry(self, no_elevation=False):
-        return [self.get_control_points(no_elevation), self.get_knots()]  
+        return self.get_splines(no_elevation)
 
 class Scaling(object):
 
@@ -713,7 +770,7 @@ class Scaling(object):
 
 class Layer(object):
 
-    def __init__(self, layer, name = None, version = None):
+    def __init__(self, layer, name = None, version = None, x = None, y = None, zoom = None, legacy_attributes=False):
         self._layer = layer
         self._features = []
         if name:
@@ -725,7 +782,7 @@ class Layer(object):
         
         self._keys = []
         self._decode_keys()
-        if self.version > 2 and len(self._layer.values) == 0:
+        if self.version > 2 and len(self._layer.values) == 0 and not legacy_attributes:
             self._inline_attributes = True
             self._string_values = []
             self._float_values = []
@@ -738,6 +795,9 @@ class Layer(object):
             self._decode_values()
         
         self._decode_attribute_scalings()
+        
+        if x is not None and y is not None and zoom is not None:
+            self.set_tile_location(zoom, x, y)
 
         if self._layer.HasField('elevation_scaling'):
             self._elevation_scaling = Scaling(self._layer.elevation_scaling)
@@ -790,10 +850,12 @@ class Layer(object):
                 self._features.append(LineStringFeature(feature, self))
             elif feature.type == vector_tile_pb2.Tile.POLYGON:
                 self._features.append(PolygonFeature(feature, self))
-            elif feature.type == vector_tile_pb2.Tile.CURVE:
-                self._features.append(CurveFeature(feature, self))
+            elif feature.type == vector_tile_pb2.Tile.SPLINE:
+                self._features.append(SplineFeature(feature, self))
     
     def add_elevation_scaling(self, offset=0, multiplier=1.0, base=0.0, min_value=None, max_value=None, precision=None):
+        if self.version < 3:
+            raise Exception("Can not add elevation scaling to Version 2 or below Vector Tiles.")
         if min_value is not None and max_value is not None and precision is not None:
             out = scaling_calculation(precision, float(min_value), float(max_value))
             offset = out['offset']
@@ -803,6 +865,10 @@ class Layer(object):
         return self._elevation_scaling
     
     def add_attribute_scaling(self, offset=0, multiplier=1.0, base=0.0, min_value=None, max_value=None, precision=None):
+        if self.version < 3:
+            raise Exception("Can not add attribute scaling to Version 2 or below Vector Tiles.")
+        if not self._inline_attributes:
+            raise Exception("Can not add attribute scaling to Version 3 or greater layers that do not support inline attributes")
         if min_value is not None and max_value is not None and precision is not None:
             out = scaling_calculation(precision, float(min_value), float(max_value))
             offset = 0
@@ -813,21 +879,21 @@ class Layer(object):
         return self._attribute_scalings[index]
 
     def add_point_feature(self, has_elevation=False):
-        self._features.append(PointFeature(self._layer.features.add(), self, has_elevation))
+        self._features.append(PointFeature(self._layer.features.add(), self, has_elevation=has_elevation))
         return self._features[-1]
 
     def add_line_string_feature(self, has_elevation=False):
-        self._features.append(LineStringFeature(self._layer.features.add(), self, has_elevation))
+        self._features.append(LineStringFeature(self._layer.features.add(), self, has_elevation=has_elevation))
         return self._features[-1]
     
     def add_polygon_feature(self, has_elevation=False):
-        self._features.append(PolygonFeature(self._layer.features.add(), self, has_elevation))
+        self._features.append(PolygonFeature(self._layer.features.add(), self, has_elevation=has_elevation))
         return self._features[-1]
     
-    def add_curve_feature(self, has_elevation=False):
+    def add_spline_feature(self, has_elevation=False, degree=None):
         if self.version < 3:
-            raise Exception("Can not add curves to Version 2 or below Vector Tiles.")
-        self._features.append(CurveFeature(self._layer.features.add(), self, has_elevation))
+            raise Exception("Can not add splines to Version 2 or below Vector Tiles.")
+        self._features.append(SplineFeature(self._layer.features.add(), self, has_elevation=has_elevation, degree=degree))
         return self._features[-1]
 
     @property
@@ -866,14 +932,48 @@ class Layer(object):
     def attribute_scalings(self):
         return self._attribute_scalings
 
-    def get_attributes(self, int_list):
+    @property
+    def x(self):
+        if self._layer.HasField('tile_x'):
+            return self._layer.tile_x
+        else:
+            return None
+
+    @property
+    def y(self):
+        if self._layer.HasField('tile_y'):
+            return self._layer.tile_y
+        else:
+            return None
+    
+    @property
+    def zoom(self):
+        if self._layer.HasField('tile_zoom'):
+            return self._layer.tile_zoom
+        else:
+            return None
+    
+    def set_tile_location(self, zoom, x, y):
+        if self.version < 3:
+            raise Exception("Can not add tile location to Version 2 or below Vector Tiles.")
+        if zoom < 0 or zoom > 50:
+            raise Exception("Please use a zoom level between 0 and 50")
+        if x < 0 or x > (2**zoom - 1):
+            raise Exception("Tile x value outside of possible values given zoom level")
+        if y < 0 or y > (2**zoom - 1):
+            raise Exception("Tile y value outside of possible values given zoom level")
+        self._layer.tile_x = x
+        self._layer.tile_y = y
+        self._layer.tile_zoom = zoom
+
+    def get_attributes(self, int_list, list_only=False):
         if not self._inline_attributes:
             attributes = {}
             for i in range(0,len(int_list),2):
                 attributes[self._keys[int_list[i]]] = self._values[int_list[i+1]]
             return attributes
         else:
-            return self._get_inline_map_attributes(iter(int_list))
+            return self._get_inline_map_attributes(iter(int_list), limit=None, list_only=list_only)
  
     def _get_inline_value(self, complex_value, value_itr):
         val_id = get_inline_value_id(complex_value)
@@ -908,7 +1008,7 @@ class Layer(object):
         else:
             raise Exception("Unknown value type in inline value")
            
-    def _get_inline_map_attributes(self, value_itr, limit = None):
+    def _get_inline_map_attributes(self, value_itr, limit = None, list_only=False):
         attr_map = {}
         if limit == 0:
             return attr_map
@@ -918,6 +1018,10 @@ class Layer(object):
                 val = next(value_itr)
             except StopIteration:
                 break
+            if list_only:
+                val_id = get_inline_value_id(val)
+                if val_id != CV_TYPE_LIST and val_id != CV_TYPE_LIST_DOUBLE:
+                    raise Exception("Invalid value type top level in geometric_attributes of feature, must be a list type")
             attr_map[self._keys[key]] = self._get_inline_value(val, value_itr)
             count = count + 1
             if limit is not None and count >= limit:
@@ -1106,12 +1210,15 @@ class Layer(object):
             data[:] = [x for x in data if x not in remove]
         return complex_values, length
 
-    def _add_inline_map_attributes(self, attrs):
+    def _add_inline_map_attributes(self, attrs, list_only=False):
         complex_values = []
         length = len(attrs)
         remove = []
         for k,v in attrs.items():
             if not isinstance(k, str) and not isinstance(k, other_str):
+                remove.append(k)
+                continue
+            if list_only and not isinstance(v, list) and not isinstance(v, FloatList):
                 remove.append(k)
                 continue
             val = self._add_inline_value(v)
@@ -1134,10 +1241,12 @@ class Layer(object):
             del attrs[k]
         return complex_values, length
 
-    def add_attributes(self, attrs):
+    def add_attributes(self, attrs, list_only=False):
         if self._inline_attributes:
-            values, length = self._add_inline_map_attributes(attrs)
+            values, length = self._add_inline_map_attributes(attrs, list_only)
             return values
+        elif list_only:
+            return []
         else:
             return self._add_legacy_attributes(attrs)
 
@@ -1165,8 +1274,8 @@ class VectorTile(object):
     def serialize(self):
         return self._tile.SerializeToString()
 
-    def add_layer(self, name, version = None):
-        self._layers.append(Layer(self._tile.layers.add(), name, version))
+    def add_layer(self, name, version = None, x = None, y = None, zoom = None, legacy_attributes=False):
+        self._layers.append(Layer(self._tile.layers.add(), name, version=version, x=x, y=y, zoom=zoom, legacy_attributes=legacy_attributes))
         return self._layers[-1]
 
     @property
