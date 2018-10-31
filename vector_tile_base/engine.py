@@ -836,7 +836,7 @@ class Layer(object):
         for val in self._layer.double_values:
             self._double_values.append(val)
         for val in self._layer.int_values:
-            self._integer_values.append(val)
+            self._int_values.append(val)
 
     def _decode_keys(self):
         for key in self._layer.keys:
@@ -1126,19 +1126,19 @@ class Layer(object):
         elif isinstance(v,UInt) and v >= 0:
             if v >= 2**56:
                 try:
-                    index = self._unsigned_integer_values.index(v)
+                    index = self._int_values.index(v)
                     return complex_value_integer(CV_TYPE_UINT, index)
                 except ValueError:
-                    self._unsigned_integer_values.append(v)
+                    self._int_values.append(v)
                     self._layer.int_values.append(v)
-                    return complex_value_integer(CV_TYPE_UINT, len(self._unsigned_integer_values) - 1)
+                    return complex_value_integer(CV_TYPE_UINT, len(self._int_values) - 1)
             else:
                 return complex_value_integer(CV_TYPE_INLINE_UINT, v)
         elif isinstance(v,int) or isinstance(v, long):
             if v >= 2**55 or v <= -2**55:
                 zz_v = zig_zag_encode_64(v)
                 try:
-                    index = self._signed_integer_values.index(zz_v)
+                    index = self._int_values.index(zz_v)
                     return complex_value_integer(CV_TYPE_SINT, index)
                 except ValueError:
                     self._int_values.append(zz_v)

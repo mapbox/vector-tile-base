@@ -268,3 +268,33 @@ def test_valid_single_layer_v3_spline_3d(vt):
     assert len(props) == 1
     assert props['natural']
     assert props['natural'] == 'spline'
+
+def test_valid_all_attribute_types_v3(vt):
+    assert len(vt.layers) == 1
+    layer = vt.layers[0]
+    assert isinstance(layer, Layer)
+    assert layer.name == 'example'
+    assert layer.extent == 4096
+    assert layer.version == 3
+    assert len(layer.features) == 1
+    feature = layer.features[0]
+    assert isinstance(feature, PointFeature)
+    assert feature.type == 'point'
+    assert feature.id == 1
+    expected_attributes = {
+        'bool_true': True,
+        'bool_false': False,
+        'null': None,
+        'string': 'a_string',
+        'float': 1.0,
+        'double': 2.0,
+        'inline_uint': 1,
+        'inline_sint': -1,
+        'uint': 2**60,
+        'int': -2**60,
+        'dlist': [1.0, 2.0, 3.0, 3.5, 4.5, 6.899999998509884],
+        'map': {'key1': 1, 'nested_map': { 'key': 1 }, 'nested_list': [1, 2, 3]},
+        'list': [True, False, None, 'a_string', 1.0, 2.0, 1, -1, 2**60, -2**60, {'key1': 1}, [1,2,3], [1.0, 2.0, 3.0, 3.5, 4.5, 6.899999998509884]] 
+    }
+    assert feature.attributes == expected_attributes
+

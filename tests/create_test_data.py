@@ -127,6 +127,30 @@ def create_valid_single_layer_v3_spline_3d():
     feature.attributes = { 'natural': 'spline' }
     return vt.serialize()
 
+def create_valid_all_attribute_types_v3():
+    vt = VectorTile()
+    layer = vt.add_layer('example', version=3)
+    scaling = layer.add_attribute_scaling(precision=10.0**-8, min_value=0.0, max_value=25.0)
+    feature = layer.add_point_feature()
+    feature.id = 1
+    feature.add_points([20,20])
+    feature.attributes = {
+        'bool_true': True,
+        'bool_false': False,
+        'null': None,
+        'string': 'a_string',
+        'float': Float(1.0),
+        'double': 2.0,
+        'inline_uint': UInt(1),
+        'inline_sint': -1,
+        'uint': UInt(2**60),
+        'int': -2**60,
+        'dlist': FloatList(scaling, [1.0, 2.0, 3.0, 3.5, 4.5, 6.9]),
+        'map': {'key1': 1, 'nested_map': { 'key': 1 }, 'nested_list': [1, 2, 3]},
+        'list': [True, False, None, 'a_string', Float(1.0), 2.0, UInt(1), -1, UInt(2**60), -2**60, {'key1': 1}, [1,2,3],FloatList(scaling, [1.0, 2.0, 3.0, 3.5, 4.5, 6.9])]  
+    }
+    return vt.serialize()
+
 def write_test_file(data, name, folder):
     if folder is None:
         filename = os.path.join('tests', 'data', name + '.mvt')
