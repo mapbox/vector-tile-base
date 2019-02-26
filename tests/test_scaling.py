@@ -3,7 +3,7 @@ from vector_tile_base.engine import scaling_calculation, zig_zag_encode_64
 from random import random, uniform
 
 def encode_to_int(dlist, sF, base, offset):
-    return [int(round(sF*(d-base) - offset)) for d in dlist] 
+    return [int(round(sF*(d-base) - offset)) for d in dlist]
 
 def decode_to_float(ilist, sR, base, offset):
     return [sR*(i + offset) + base for i in ilist]
@@ -27,7 +27,7 @@ def calculate_size(some_data):
         else:
             n = zig_zag_encode_64(v) >> 7
             size = size + 1
-            while n != 0: 
+            while n != 0:
                 n = n >> 7
                 size = size + 1
     return size
@@ -44,7 +44,7 @@ def test_scaling_range():
     ilist_sorted = ilist
     ilist_sorted.sort()
     ilist_delta_sorted = delta_encode(ilist_sorted, 0)
-    
+
     dlist_size = calculate_size(dlist)
     ilist_size = calculate_size(ilist)
     ilist_delta_size = calculate_size(ilist_delta)
@@ -52,7 +52,7 @@ def test_scaling_range():
     assert dlist_size > ilist_size
 
     assert ilist_size > ilist_delta_sorted_size
-    assert ilist_delta_size > ilist_delta_sorted_size 
+    assert ilist_delta_size > ilist_delta_sorted_size
 
     max_diff = max(find_diff(dlist, new_dlist))
     assert max_diff < precision

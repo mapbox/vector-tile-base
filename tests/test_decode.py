@@ -294,7 +294,7 @@ def test_valid_all_attribute_types_v3(vt):
         'int': -2**60,
         'dlist': [1.0, 2.0, 3.0, 3.5, 4.5, 6.899999998509884],
         'map': {'key1': 1, 'nested_map': { 'key': 1 }, 'nested_list': [1, 2, 3]},
-        'list': [True, False, None, 'a_string', 1.0, 2.0, 1, -1, 2**60, -2**60, {'key1': 1}, [1,2,3], [1.0, 2.0, 3.0, 3.5, 4.5, 6.899999998509884]] 
+        'list': [True, False, None, 'a_string', 1.0, 2.0, 1, -1, 2**60, -2**60, {'key1': 1}, [1,2,3], [1.0, 2.0, 3.0, 3.5, 4.5, 6.899999998509884]]
     }
     assert feature.attributes == expected_attributes
 

@@ -11,13 +11,13 @@ import sys
 # destination folder in which the data is saved. If
 # it is not set no folder is assigned.
 
-# Example 1: 
+# Example 1:
 # def create_valid_point_a() will create a file
 # named test/data/valid/point_a.mvt
-# Example 2: 
+# Example 2:
 # def create_invalid_stuff() will create a file
 # named test/data/invalid/stuff.mvt
-# Example 3: 
+# Example 3:
 # def create_wild() will create a file
 # named test/data/wild.mvt
 
@@ -147,7 +147,7 @@ def create_valid_all_attribute_types_v3():
         'int': -2**60,
         'dlist': FloatList(scaling, [1.0, 2.0, 3.0, 3.5, 4.5, 6.9]),
         'map': {'key1': 1, 'nested_map': { 'key': 1 }, 'nested_list': [1, 2, 3]},
-        'list': [True, False, None, 'a_string', Float(1.0), 2.0, UInt(1), -1, UInt(2**60), -2**60, {'key1': 1}, [1,2,3],FloatList(scaling, [1.0, 2.0, 3.0, 3.5, 4.5, 6.9])]  
+        'list': [True, False, None, 'a_string', Float(1.0), 2.0, UInt(1), -1, UInt(2**60), -2**60, {'key1': 1}, [1,2,3],FloatList(scaling, [1.0, 2.0, 3.0, 3.5, 4.5, 6.9])]
     }
     return vt.serialize()
 

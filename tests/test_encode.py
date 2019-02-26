@@ -102,7 +102,7 @@ def test_feature_id():
     # Fails for a version 2 layer
     with pytest.raises(Exception):
         feature.id = "FeatureName"
-    
+
     layer = vt.add_layer('test2', version=3)
     feature = layer.add_point_feature()
     assert feature.id == None
@@ -157,11 +157,11 @@ def test_feature_attributes_version_2():
     feature.attributes = prop_dict
     assert feature.attributes != prop_dict
     assert feature.attributes == prop_dict2
-    
+
     # Show that geometric attributes don't work with version 2
     with pytest.raises(Exception):
         feature.geometric_attributes = {'hmm': [1,2,3,4,5]}
-    
+
     # Now serialize the tile
     data = vt.serialize()
     # Reload as new tile to check that cursor moves to proper position for another add point
@@ -225,11 +225,11 @@ def test_feature_attributes_version_3_legacy():
     feature.attributes = prop_dict
     assert feature.attributes != prop_dict
     assert feature.attributes == prop_dict2
-    
+
     # Show that geometric attributes don't work with version 3 legacy attributes
     with pytest.raises(Exception):
         feature.geometric_attributes = {'hmm': [1,2,3,4,5]}
-    
+
     # Now serialize the tile
     data = vt.serialize()
     # Reload as new tile to check that cursor moves to proper position for another add point
@@ -292,13 +292,13 @@ def test_feature_attributes_version_3():
 
     flist1 = FloatList(scaling1, dvalues)
     flist2 = FloatList(scaling2, dvalues)
-    
+
     # During setting invalid attributes with bad keys or value types will just be dropped
     prop_dict = {
-        'foo': [1,2,3], 
-        'fee': [{'a':'b'}, {'a':['c','d']}], 
-        1.2341: 'stuff', 
-        1: 'fish', 
+        'foo': [1,2,3],
+        'fee': [{'a':'b'}, {'a':['c','d']}],
+        1.2341: 'stuff',
+        1: 'fish',
         'go': False,
         'double': 2.32432,
         'float': Float(23432.3222),
@@ -334,7 +334,7 @@ def test_feature_attributes_version_3():
 
     feature.geometric_attributes = geometric_dict
     assert feature.geometric_attributes == geometric_dict2
-    
+
     # Now serialize the tile
     data = vt.serialize()
     # Reload as new tile to check that cursor moves to proper position for another add point
@@ -455,7 +455,7 @@ def test_create_line_feature():
     feature.add_line_string(line_string)
     # note that we pull back possible multi line string here
     assert feature.get_line_strings() == [line_string]
-    
+
     bad_line_string = [[1,1]]
     with pytest.raises(Exception):
         feature.add_line_string(bad_line_string)
@@ -500,7 +500,7 @@ def test_create_line_feature_3d():
     feature.add_line_string(line_string)
     # note that we pull back possible multi line string here
     assert feature.get_line_strings() == [line_string]
-    
+
     bad_line_string = [[1,1,1]]
     with pytest.raises(Exception):
         feature.add_line_string(bad_line_string)
@@ -541,17 +541,17 @@ def test_create_polygon_feature():
     feature.add_ring(polygon[1])
     assert feature.get_rings() == polygon
     assert feature.get_polygons() == [polygon]
-    
+
     bad_ring1 = [[0,0],[1,0]]
     with pytest.raises(Exception):
         feature.add_ring(bad_ring)
     assert feature.get_polygons() == [polygon]
-    
+
     bad_ring2 = [[0,0],[1,0],[0,0]]
     with pytest.raises(Exception):
         feature.add_ring(bad_ring2)
     assert feature.get_polygons() == [polygon]
-    
+
     bad_ring3 = [[0,0],[1,0],[1,1],[1],[0,0]]
     with pytest.raises(IndexError):
         feature.add_ring(bad_ring3)
@@ -572,7 +572,7 @@ def test_create_polygon_feature():
     assert feature.get_rings() == [polygon[1], polygon[0]]
     # First ring in wrong winding order so dropped from polygon output
     assert feature.get_polygons() == [[polygon[0]]]
-    
+
     # clear current geometry
     feature.clear_geometry()
     assert feature.get_rings() == []
@@ -582,7 +582,7 @@ def test_create_polygon_feature():
     feature.add_ring(polygon[1])
     assert feature.get_rings() == polygon
     assert feature.get_polygons() == [polygon]
-    
+
     # Now serialize the tile
     data = vt.serialize()
     # Reload as new tile to check that cursor moves to proper position for another add point
@@ -612,17 +612,17 @@ def test_create_polygon_feature_3d():
     feature.add_ring(polygon[1])
     assert feature.get_rings() == polygon
     assert feature.get_polygons() == [polygon]
-    
+
     bad_ring1 = [[0,0,1],[1,0,1]]
     with pytest.raises(Exception):
         feature.add_ring(bad_ring)
     assert feature.get_polygons() == [polygon]
-    
+
     bad_ring2 = [[0,0,1],[1,0,1],[0,0,1]]
     with pytest.raises(Exception):
         feature.add_ring(bad_ring2)
     assert feature.get_polygons() == [polygon]
-    
+
     bad_ring3 = [[0,0,1],[1,0,1],[1,1,1],[1,1],[0,0,1]]
     with pytest.raises(IndexError):
         feature.add_ring(bad_ring3)
@@ -641,7 +641,7 @@ def test_create_polygon_feature_3d():
     feature.add_ring(polygon[1])
     assert feature.get_rings() == polygon
     assert feature.get_polygons() == [polygon]
-    
+
     # Now serialize the tile
     data = vt.serialize()
     # Reload as new tile to check that cursor moves to proper position for another add point
@@ -678,7 +678,7 @@ def test_create_spline_feature():
     bad_control_points2 = [[8,10],[9,11],[9],[12,10]]
     with pytest.raises(IndexError):
         feature.add_spline(bad_control_points2, knots)
-    
+
     control_points = [[8,10],[9,11],[11,9],[12,10]]
     feature.add_spline(control_points, knots)
 
@@ -693,7 +693,7 @@ def test_create_spline_feature_3d():
     assert feature == layer.features[0]
     assert feature.has_elevation
     assert feature.degree == 2
-    
+
     scaling = layer.add_attribute_scaling(precision=10.0**-8, min_value=0.0, max_value=25.0)
     bad_control_points1 = [[8,10,1]]
     knot_values = [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
@@ -703,7 +703,7 @@ def test_create_spline_feature_3d():
     bad_control_points2 = [[8,10,1],[9,11,1],[9,1],[12,10,1]]
     with pytest.raises(IndexError):
         feature.add_spline(bad_control_points2, knots)
-    
+
     control_points = [[8,10,1],[9,11,1],[11,9,1],[12,10,1]]
     feature.add_spline(control_points, knots)
 
