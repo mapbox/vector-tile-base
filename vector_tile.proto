@@ -1,3 +1,4 @@
+syntax = "proto2";
 package vector_tile;
 
 option optimize_for = LITE_RUNTIME;
@@ -77,7 +78,7 @@ message Tile {
                 // in the geometry.
                 // These values are scaled and offset using the layer's
                 // elevation_scaling, if present.
-                repeated sint32 elevation = 7 [ packed = true];
+                repeated sint64 elevation = 7 [ packed = true];
 
                 repeated uint64 spline_knots = 8 [ packed = true ];
 

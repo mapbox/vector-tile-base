@@ -289,7 +289,7 @@ class Feature(object):
                 elevation_list.append(int(pt[2]) - self.cursor[2])
                 self.cursor[2] = int(pt[2])
             else:
-                new_pt = self._layer._elevation_scaling.encode_value(int(pt[2]))
+                new_pt = self._layer._elevation_scaling.encode_value(pt[2])
                 elevation_list.append(new_pt - self.cursor[2])
                 self.cursor[2] = new_pt
 
@@ -858,7 +858,7 @@ class Layer(object):
             raise Exception("Can not add elevation scaling to Version 2 or below Vector Tiles.")
         if min_value is not None and max_value is not None and precision is not None:
             out = scaling_calculation(precision, float(min_value), float(max_value))
-            offset = out['offset']
+            offset = 0
             base = out['base']
             multiplier = out['sR']
         self._elevation_scaling = Scaling(self._layer.elevation_scaling, offset=offset, multiplier=multiplier, base=base)
