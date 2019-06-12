@@ -708,3 +708,35 @@ def test_create_spline_feature_3d():
     feature.add_spline(control_points, knots)
 
     assert feature.get_splines() == [[control_points, knot_values]]
+
+def test_create_spline_feature_3d_with_elevation_scaling():
+    vt = VectorTile()
+    layer = vt.add_layer('test', version=3)
+
+    scaling = layer.add_attribute_scaling(precision=10.0**-8, min_value=0.0, max_value=25.0)
+    knot_values = [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
+    knots = FloatList(scaling, knot_values)
+    control_points = [[8,10,-11000.0],[9,11,9000.0],[11,9,85.1],[12,10,1500.74]]
+    layer.add_elevation_scaling(precision=10.0**2, min_value=-11000.0, max_value=9000.0)
+    
+    layer.add_elevation_scaling(precision=10.0**-8, min_value=-11000.0, max_value=9000.0)
+    with pytest.raises(Exception):
+        feature = layer.add_spline_feature(has_elevation=True)
+        feature.add_spline(control_points, knots)
+    
+    feature = layer.add_spline_feature(has_elevation=True)
+    layer.add_elevation_scaling(precision=10.0**-5, min_value=-11000.0, max_value=9000.0)
+    feature.add_spline(control_points, knots)
+
+    out = feature.get_splines()
+    assert len(out) == 1
+    assert len(out[0]) == 2
+    out_control_points = out[0][0]
+    out_knot_values = out[0][1]
+    assert out_knot_values == knot_values
+    assert len(control_points) == len(out_control_points)
+    for i in range(len(control_points)):
+        assert len(control_points[i]) == len(out_control_points[i])
+        assert out_control_points[i][0] == control_points[i][0]
+        assert out_control_points[i][1] == control_points[i][1]
+        assert out_control_points[i][2] == pytest.approx(control_points[i][2])

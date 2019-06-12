@@ -289,7 +289,7 @@ class Feature(object):
                 elevation_list.append(int(pt[2]) - self.cursor[2])
                 self.cursor[2] = int(pt[2])
             else:
-                new_pt = self._layer._elevation_scaling.encode_value(int(pt[2]))
+                new_pt = self._layer._elevation_scaling.encode_value(pt[2])
                 elevation_list.append(new_pt - self.cursor[2])
                 self.cursor[2] = new_pt
 
@@ -405,7 +405,10 @@ class PointFeature(Feature):
             self._feature.geometry[0] = command_move_to(self._num_points)
         self._feature.geometry.extend(cmd_list)
         if elevation_list:
-            self._feature.elevation.extend(elevation_list)
+            try:
+                self._feature.elevation.extend(elevation_list)
+            except ValueError:
+                raise Exception("Elevation scaling results in value outside of value range of sint32, reduce elevation scaling precision.")
 
     def get_points(self, no_elevation=False):
         points = []
@@ -461,7 +464,10 @@ class LineStringFeature(Feature):
             raise e
         self._feature.geometry.extend(cmd_list)
         if elevation_list:
-            self._feature.elevation.extend(elevation_list)
+            try:
+                self._feature.elevation.extend(elevation_list)
+            except ValueError:
+                raise Exception("Elevation scaling results in value outside of value range of sint32, reduce elevation scaling precision.")
 
     def get_line_strings(self, no_elevation=False):
         line_strings = []
@@ -538,7 +544,10 @@ class PolygonFeature(Feature):
             raise e
         self._feature.geometry.extend(cmd_list)
         if elevation_list:
-            self._feature.elevation.extend(elevation_list)
+            try:
+                self._feature.elevation.extend(elevation_list)
+            except ValueError:
+                raise Exception("Elevation scaling results in value outside of value range of sint32, reduce elevation scaling precision.")
 
     def get_rings(self, no_elevation=False):
         rings = []
@@ -641,7 +650,10 @@ class SplineFeature(Feature):
             raise e
         self._feature.geometry.extend(cmd_list)
         if elevation_list:
-            self._feature.elevation.extend(elevation_list)
+            try:
+                self._feature.elevation.extend(elevation_list)
+            except ValueError:
+                raise Exception("Elevation scaling results in value outside of value range of sint32, reduce elevation scaling precision.")
         values, length = self._layer._add_inline_float_list(knots)
         values.insert(0, complex_value_integer(CV_TYPE_LIST_DOUBLE, length))
         self._feature.spline_knots.extend(values)
@@ -858,7 +870,7 @@ class Layer(object):
             raise Exception("Can not add elevation scaling to Version 2 or below Vector Tiles.")
         if min_value is not None and max_value is not None and precision is not None:
             out = scaling_calculation(precision, float(min_value), float(max_value))
-            offset = out['offset']
+            offset = 0
             base = out['base']
             multiplier = out['sR']
         self._elevation_scaling = Scaling(self._layer.elevation_scaling, offset=offset, multiplier=multiplier, base=base)
