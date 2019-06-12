@@ -6,7 +6,7 @@ layer = vt.add_layer('my_locations')
 feature = layer.add_point_feature()
 feature.add_points([[10,10],[20,20]])
 feature.id = 1
-feature.properties = { 'type': 1, 'name': 'my_points' }
+feature.attributes = { 'type': 1, 'name': 'my_points' }
 
 encoded_tile = vt.serialize()
 

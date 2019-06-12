@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-# Parse the version from the fiona module.
+# Parse the version from the vector tile base module.
 with open('vector_tile_base/__init__.py') as f:
     for line in f:
         if line.find("__version__") >= 0:

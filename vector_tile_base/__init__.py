@@ -6,8 +6,11 @@ PointFeature = engine.PointFeature
 LineStringFeature = engine.LineStringFeature
 PolygonFeature = engine.PolygonFeature
 SplineFeature = engine.SplineFeature
-FeatureProperties = engine.FeatureProperties
+FeatureAttributes = engine.FeatureAttributes
 Float = engine.Float
+FloatList = engine.FloatList
+UInt = engine.UInt
+scaling_calculation = engine.scaling_calculation
 
 __version__ = "1.0"
 
