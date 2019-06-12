@@ -717,7 +717,6 @@ def test_create_spline_feature_3d_with_elevation_scaling():
     knot_values = [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
     knots = FloatList(scaling, knot_values)
     control_points = [[8,10,-11000.0],[9,11,9000.0],[11,9,85.1],[12,10,1500.74]]
-    layer.add_elevation_scaling(precision=10.0**2, min_value=-11000.0, max_value=9000.0)
     
     layer.add_elevation_scaling(precision=10.0**-8, min_value=-11000.0, max_value=9000.0)
     with pytest.raises(Exception):
