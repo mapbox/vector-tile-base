@@ -80,7 +80,10 @@ def complex_value_integer(cmd_id, param):
 class Float(float):
 
     def __new__(self, *args, **kwargs):
-        return float.__new__(self, *args, **kwargs)
+        x = float(*args, **kwargs)
+        vm = vector_tile_pb2.Tile.Value()
+        vm.float_value = x
+        return float.__new__(self, vm.float_value)
     def __init__(self, *args, **kwargs):
         float.__init__(*args, **kwargs)
 
