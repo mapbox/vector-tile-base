@@ -1,4 +1,5 @@
 import pytest
+from vector_tile_base import vector_tile_pb2
 from vector_tile_base import VectorTile, SplineFeature, PointFeature, PolygonFeature, LineStringFeature, Layer, FeatureAttributes, Float, FloatList
 
 def test_no_layers():
@@ -153,7 +154,7 @@ def test_feature_attributes_version_2():
         foo = feature.attributes[1]
     # During setting invalid attributes with bad keys or value types will just be dropped
     prop_dict = {'foo': [1,2,3], 'fee': [{'a':'b'}, {'a':['c','d']}], 1.2341: 'stuff', 1: 'fish', 'go': False, 'double': 2.32432, 'float': Float(23432.3222) }
-    prop_dict2 = {'go': False, 'double': 2.32432, 'float': 23432.3222 }
+    prop_dict2 = {'go': False, 'double': 2.32432, 'float': Float(23432.3222) }
     feature.attributes = prop_dict
     assert feature.attributes != prop_dict
     assert feature.attributes == prop_dict2
@@ -223,7 +224,7 @@ def test_feature_attributes_version_3_legacy():
     prop_dict2 = {
         'go': False,
         'double': 2.32432,
-        'float': 23432.3222,
+        'float': Float(23432.3222),
         'double2': 23432.3222,
         'double3': 23432.3222
     }
@@ -745,3 +746,23 @@ def test_create_spline_feature_3d_with_elevation_scaling():
         assert out_control_points[i][0] == control_points[i][0]
         assert out_control_points[i][1] == control_points[i][1]
         assert out_control_points[i][2] == pytest.approx(control_points[i][2])
+
+
+def test_float():
+    x1 = Float(293.045998633665)
+    x2 = Float(293.045998634)
+    x3 = Float(293.045998633748)
+    vm = vector_tile_pb2.Tile.Value()
+    vm.float_value = 293.045998633665
+    x1_encoded = vm.float_value
+    vm.float_value = 293.045998634
+    x2_encoded = vm.float_value
+    vm.float_value = 293.045998633748
+    x3_encoded = vm.float_value
+    assert x1 == x2
+    assert x1 == x3
+    assert x1_encoded == x2_encoded
+    assert x1_encoded == x3_encoded
+    assert x1 == x1_encoded
+    assert x2 == x2_encoded
+    assert x3 == x3_encoded

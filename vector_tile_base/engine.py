@@ -1,6 +1,5 @@
 import itertools
 import math
-import struct
 from . import vector_tile_pb2
 
 # Constants
@@ -81,11 +80,12 @@ def complex_value_integer(cmd_id, param):
 class Float(float):
 
     def __new__(self, *args, **kwargs):
-        return float.__new__(self, *args, **kwargs)
-    def __init__(self, *args, **kwargs):
         x = float(*args, **kwargs)
-        new_float = struct.unpack('f', struct.pack('f', x))[0]
-        float.__init__(new_float)
+        vm = vector_tile_pb2.Tile.Value()
+        vm.float_value = x
+        return float.__new__(self, vm.float_value)
+    def __init__(self, *args, **kwargs):
+        float.__init__(*args, **kwargs)
 
 class UInt(long):
 
