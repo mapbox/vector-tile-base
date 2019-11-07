@@ -1,5 +1,6 @@
 import itertools
 import math
+import struct
 from . import vector_tile_pb2
 
 # Constants
@@ -82,7 +83,9 @@ class Float(float):
     def __new__(self, *args, **kwargs):
         return float.__new__(self, *args, **kwargs)
     def __init__(self, *args, **kwargs):
-        float.__init__(*args, **kwargs)
+        x = float(*args, **kwargs)
+        new_float = struct.unpack('f', struct.pack('f', x))[0]
+        float.__init__(new_float)
 
 class UInt(long):
 
