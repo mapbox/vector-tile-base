@@ -207,6 +207,7 @@ def test_feature_attributes_version_3_legacy():
         foo = feature.attributes[1.234]
     with pytest.raises(TypeError):
         foo = feature.attributes[1]
+    assert len(layer._values) == 5
     # During setting invalid attributes with bad keys or value types will just be dropped
     prop_dict = {
         'foo': [1,2,3],
@@ -215,16 +216,21 @@ def test_feature_attributes_version_3_legacy():
         1: 'fish',
         'go': False,
         'double': 2.32432,
-        'float': Float(23432.3222)
+        'float': Float(23432.3222),
+        'double2': 23432.3222,
+        'double3': 23432.3222
     }
     prop_dict2 = {
         'go': False,
         'double': 2.32432,
-        'float': 23432.3222
+        'float': 23432.3222,
+        'double2': 23432.3222,
+        'double3': 23432.3222
     }
     feature.attributes = prop_dict
     assert feature.attributes != prop_dict
     assert feature.attributes == prop_dict2
+    assert len(layer._values) == 9
 
     # Show that geometric attributes don't work with version 3 legacy attributes
     with pytest.raises(Exception):

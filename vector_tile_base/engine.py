@@ -1073,6 +1073,14 @@ class Layer(object):
                 break
         return attr_list
 
+    
+    def _is_in_values(self, value):
+        for e_v in self._values:
+            if type(value) == type(e_v) and value == e_v:
+                return True
+        return False
+
+
     def _add_legacy_attributes(self, attrs):
         tags = []
         remove = []
@@ -1080,7 +1088,7 @@ class Layer(object):
             if not isinstance(k, str) and not isinstance(k, other_str):
                 remove.append(k)
                 continue
-            if not (v in self._values and type(self._values[self._values.index(v)]) == type(v)):
+            if not self._is_in_values(v):
                 if isinstance(v,bool):
                     val = self._layer.values.add()
                     val.bool_value = v
