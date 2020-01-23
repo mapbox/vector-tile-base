@@ -72,7 +72,7 @@ for l in vt.layers:
     print(l.name)
     for f in l.features:
         print(f.type)
-        print(f.properties)
+        print(f.attributes)
         print(f.get_geometry())
 ```
 
