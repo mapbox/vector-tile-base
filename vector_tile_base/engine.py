@@ -1076,13 +1076,11 @@ class Layer(object):
                 break
         return attr_list
 
-    
     def _is_in_values(self, value):
         for e_v in self._values:
-            if type(value) == type(e_v) and value == e_v:
+            if value == e_v and type(value) == type(e_v):
                 return True
         return False
-
 
     def _add_legacy_attributes(self, attrs):
         tags = []
