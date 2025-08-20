@@ -1,1 +1,1 @@
-protobuf==2.6.1
+protobuf==6.32.0
