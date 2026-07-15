@@ -25,7 +25,7 @@ setup(name='vector_tile_base',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-        'protobuf'
+        'protobuf>=4.21'
       ],
       extras_require={
         'test': ['pytest'],
