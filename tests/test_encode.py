@@ -766,3 +766,16 @@ def test_float():
     assert x1 == x1_encoded
     assert x2 == x2_encoded
     assert x3 == x3_encoded
+
+def test_closed_float_ring_is_not_duplicated():
+    vt = VectorTile()
+    feature = vt.add_layer('test').add_polygon_feature()
+    ring = [
+        [float(0), float(0)],
+        [float(10), float(0)],
+        [float(10), float(10)],
+        [float(0), float(10)],
+        [float(0), float(0)],
+    ]
+    feature.add_ring(ring)
+    assert feature.get_rings() == [[[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]]]
