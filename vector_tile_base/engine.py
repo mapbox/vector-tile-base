@@ -310,7 +310,8 @@ class Feature(object):
         return out
 
     def _points_equal(self, pt1, pt2):
-        if pt1[0] is not pt2[0] or pt1[1] is not pt2[1] or (self._has_elevation and pt1[2] is not pt2[2]):
+        # Equal floats are not the same object. Identity kept a duplicate end on a closed ring.
+        if pt1[0] != pt2[0] or pt1[1] != pt2[1] or (self._has_elevation and pt1[2] != pt2[2]):
             return False
         return True
 
